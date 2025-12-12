@@ -78,8 +78,6 @@ export default function Home() {
       icon: "assignment",
       date: 26,
     },
-
-
   ];
 
   // Filtrar eventos do dia selecionado
@@ -105,7 +103,7 @@ export default function Home() {
                 />
               </div>
 
-              {/* Sidebar de tarefas e eventos */}
+
               <aside className="lg:block">
                 <TaskSidebar
                   tasks={tasks}

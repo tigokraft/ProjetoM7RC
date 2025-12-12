@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Lexend } from "next/font/google";
 import "./globals.css";
 
+
 const lexend = Lexend({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
