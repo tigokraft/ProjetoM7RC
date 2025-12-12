@@ -11,7 +11,12 @@ import { Task } from "@/types/task";
 import { DayEvent } from "@/types/event";
 
 export default function Home() {
-  const [selectedDate, setSelectedDate] = useState(26);
+  // Usar a data atual do sistema
+  const today = new Date();
+  const [selectedDate, setSelectedDate] = useState(today.getDate());
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
+
   const [tasks, setTasks] = useState<Task[]>([
     { id: 1, title: "Revisar conteúdo de Cálculo Avançado", completed: false },
     { id: 2, title: "Preparar relatório de Química Orgânica", completed: true },
@@ -28,6 +33,13 @@ export default function Home() {
     setTasks(tasks.map(task =>
       task.id === id ? { ...task, completed: !task.completed } : task
     ));
+  };
+
+  const handleMonthChange = (month: number, year: number) => {
+    setCurrentMonth(month);
+    setCurrentYear(year);
+    // Reset selected date to 1 when changing month
+    setSelectedDate(1);
   };
 
   const handleEventClick = (event: DayEvent) => {
@@ -100,6 +112,9 @@ export default function Home() {
                   events={calendarEvents}
                   selectedDate={selectedDate}
                   onDateSelect={setSelectedDate}
+                  currentMonth={currentMonth}
+                  currentYear={currentYear}
+                  onMonthChange={handleMonthChange}
                 />
               </div>
 
