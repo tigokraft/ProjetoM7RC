@@ -6,14 +6,30 @@ datasource db {
   provider = "postgresql"
 }
 
+// ==================== USERS ====================
+
 model User {
   id             String           @id @default(cuid())
   email          String           @unique
   name           String
   password       String
+  phone          String?          // For SMS notifications
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  ForgotPassword ForgotPassword[]
+  
+  // Relations
+  ForgotPassword    ForgotPassword[]
+  ownedWorkspaces   Workspace[]       @relation("WorkspaceOwner")
+  memberships       WorkspaceMember[]
+  groupMemberships  GroupMember[]
+  createdVotes      Vote[]
+  voteResponses     VoteResponse[]
+  createdEvents     Event[]
+  attendances       Attendance[]
+  createdTasks      Task[]            @relation("TaskCreator")
+  taskCompletions   TaskCompletion[]
+  notifications     Notification[]
+  notificationPrefs NotificationPreference?
 
   @@map("users")
 }
@@ -27,4 +43,263 @@ model ForgotPassword {
   validUntil DateTime
 
   @@map("forgot_password")
+}
+
+// ==================== WORKSPACES ====================
+
+model Workspace {
+  id            String        @id @default(cuid())
+  name          String
+  description   String?
+  type          WorkspaceType @default(CLASS)
+  ownerId       String
+  owner         User          @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  votingEnabled Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  members     WorkspaceMember[]
+  groups      Group[]
+  events      Event[]
+  disciplines Discipline[]
+  tasks       Task[]
+  votes       Vote[]
+
+  @@map("workspaces")
+}
+
+enum WorkspaceType {
+  CLASS
+  PERSONAL
+}
+
+model WorkspaceMember {
+  id          String     @id @default(cuid())
+  workspaceId String
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  role        MemberRole @default(USER)
+  joinedAt    DateTime   @default(now())
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+enum MemberRole {
+  ADMIN
+  USER
+}
+
+// ==================== GROUPS ====================
+
+model Group {
+  id          String    @id @default(cuid())
+  name        String
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  members GroupMember[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id      String @id @default(cuid())
+  groupId String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+// ==================== VOTING ====================
+
+model Vote {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  options VoteOption[]
+
+  @@map("votes")
+}
+
+model VoteOption {
+  id     String @id @default(cuid())
+  voteId String
+  vote   Vote   @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  text   String
+
+  responses VoteResponse[]
+
+  @@map("vote_options")
+}
+
+model VoteResponse {
+  id        String     @id @default(cuid())
+  optionId  String
+  option    VoteOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  createdAt DateTime   @default(now())
+
+  @@unique([optionId, userId])
+  @@map("vote_responses")
+}
+
+// ==================== EVENTS ====================
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  location    String?
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  attendances Attendance[]
+
+  @@map("events")
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  eventId   String
+  event     Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  status    AttendanceStatus @default(PENDING)
+  checkedAt DateTime?
+
+  @@unique([eventId, userId])
+  @@map("attendances")
+}
+
+enum AttendanceStatus {
+  PENDING
+  PRESENT
+  ABSENT
+  EXCUSED
+}
+
+// ==================== DISCIPLINES ====================
+
+model Discipline {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  color       String?   // Hex color for UI
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  tasks Task[]
+
+  @@map("disciplines")
+}
+
+// ==================== TASKS ====================
+
+model Task {
+  id           String      @id @default(cuid())
+  title        String
+  description  String?
+  type         TaskType
+  dueDate      DateTime
+  workspaceId  String
+  workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  disciplineId String?
+  discipline   Discipline? @relation(fields: [disciplineId], references: [id])
+  createdById  String
+  createdBy    User        @relation("TaskCreator", fields: [createdById], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  completions TaskCompletion[]
+
+  @@map("tasks")
+}
+
+enum TaskType {
+  TRABALHO // Work/Assignment
+  TESTE    // Test
+  PROJETO  // Project
+  TAREFA   // Task/Homework
+}
+
+model TaskCompletion {
+  id          String    @id @default(cuid())
+  taskId      String
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  @@unique([taskId, userId])
+  @@map("task_completions")
+}
+
+// ==================== NOTIFICATIONS ====================
+
+model Notification {
+  id           String              @id @default(cuid())
+  userId       String
+  user         User                @relation(fields: [userId], references: [id])
+  type         NotificationType
+  title        String
+  message      String
+  referenceId  String?             // ID of related entity (task, event, etc.)
+  read         Boolean             @default(false)
+  channels     NotificationChannel[]
+  scheduledFor DateTime?
+  sentAt       DateTime?
+  createdAt    DateTime            @default(now())
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  EVENT_REMINDER
+  TASK_DEADLINE
+  VOTE_CREATED
+  GROUP_ASSIGNED
+  WORKSPACE_INVITE
+  GENERAL
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PUSH
+}
+
+model NotificationPreference {
+  id                 String              @id @default(cuid())
+  userId             String              @unique
+  user               User                @relation(fields: [userId], references: [id])
+  emailEnabled       Boolean             @default(true)
+  smsEnabled         Boolean             @default(false)
+  pushEnabled        Boolean             @default(true)
+  reminderDaysBefore Int                 @default(1) // Days before deadline to remind
+  reminderOnDay      Boolean             @default(true)
+  
+  @@map("notification_preferences")
 }
