@@ -70,7 +70,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid request data", details: parsed.error.errors },
+        { error: "Invalid request data", details: parsed.error.issues },
         { status: 400 }
       );
     }
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid request data", details: parsed.error.errors },
+        { error: "Invalid request data", details: parsed.error.issues },
         { status: 400 }
       );
     }
