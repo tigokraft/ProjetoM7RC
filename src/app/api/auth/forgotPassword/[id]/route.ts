@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import * as z from "zod";
 import { hashPassword } from "@/lib/Hasher";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 const resetPasswordObj = z.object({
   password: z.string().min(8),

@@ -1,11 +1,9 @@
 import { NextResponse, NextRequest } from "next/server";
 import * as z from "zod";
-import { PrismaClient } from "@prisma/client";
 import { comparePassword } from "@/lib/Hasher";
 import { signToken } from "@/lib/Jwt";
 import { serialize } from "cookie";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 const userObj = z.object({
   email: z.string().email(),

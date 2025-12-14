@@ -1,10 +1,9 @@
 import * as z from "zod";
 import { NextResponse, NextRequest } from "next/server";
 import { hashPassword } from "@/lib/Hasher";
-import { PrismaClient } from "@prisma/client";
 import { signToken } from "@/lib/Jwt";
-
-const prisma = new PrismaClient();
+import { serialize } from "cookie";
+import { prisma } from "@/lib/prisma";
 
 const userObj = z.object({
   name: z.string().min(5),
