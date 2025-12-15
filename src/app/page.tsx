@@ -204,7 +204,7 @@ export default function Home() {
       case "disciplinas":
         return <DisciplinesPage disciplines={disciplines} workspaces={workspaces} />;
       case "grupos":
-        return <GroupsPage groups={groups} />;
+        return <GroupsPage />;
       default:
         return null;
     }
