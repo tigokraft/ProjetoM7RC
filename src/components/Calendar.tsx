@@ -9,6 +9,12 @@ export interface CalendarEvent {
     icon: string;
 }
 
+export interface DayIndicators {
+    hasPendingTasks: boolean;
+    hasCompletedTasks: boolean;
+    hasEvents: boolean;
+}
+
 interface CalendarProps {
     events: CalendarEvent[];
     selectedDate: number;
@@ -16,6 +22,7 @@ interface CalendarProps {
     currentMonth: number;
     currentYear: number;
     onMonthChange: (month: number, year: number) => void;
+    dayIndicators?: Map<number, DayIndicators>; // New prop for multi-type indicators
 }
 
 const MONTH_NAMES = [
@@ -29,7 +36,8 @@ export default function Calendar({
     onDateSelect,
     currentMonth,
     currentYear,
-    onMonthChange
+    onMonthChange,
+    dayIndicators = new Map(),
 }: CalendarProps) {
 
     // Calcular dias no mês
@@ -60,8 +68,18 @@ export default function Calendar({
     const firstDayOfMonth = getFirstDayOfMonth(currentMonth, currentYear);
     const prevMonthDays = getPrevMonthDays(currentMonth, currentYear);
 
+    // Legacy: check if has event (for backward compatibility)
     const hasEvent = (day: number) => {
         return events.some(event => event.date === day);
+    };
+
+    // Get indicators for a specific day
+    const getIndicators = (day: number): DayIndicators => {
+        return dayIndicators.get(day) || {
+            hasPendingTasks: false,
+            hasCompletedTasks: false,
+            hasEvents: hasEvent(day), // Fallback to old logic
+        };
     };
 
     const goToPreviousMonth = () => {
@@ -138,7 +156,8 @@ export default function Calendar({
                     {/* Current month days */}
                     {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
                         const isSelected = day === selectedDate;
-                        const dayHasEvent = hasEvent(day);
+                        const indicators = getIndicators(day);
+                        const hasAnyIndicator = indicators.hasPendingTasks || indicators.hasCompletedTasks || indicators.hasEvents;
 
                         return (
                             <button
@@ -152,9 +171,27 @@ export default function Calendar({
                                 <div className={`flex size-full flex-col items-center justify-center rounded-lg relative ${isSelected ? 'bg-[#1E40AF] shadow-lg' : ''
                                     }`}>
                                     <span>{day}</span>
-                                    {dayHasEvent && (
-                                        <span className={`mt-1 h-1.5 w-1.5 rounded-full ${isSelected ? 'bg-amber-400' : 'bg-amber-500'
-                                            }`}></span>
+                                    {hasAnyIndicator && (
+                                        <div className="flex gap-0.5 mt-1">
+                                            {indicators.hasPendingTasks && (
+                                                <span
+                                                    className="h-1.5 w-1.5 rounded-full bg-yellow-500"
+                                                    title="Tarefas pendentes"
+                                                />
+                                            )}
+                                            {indicators.hasCompletedTasks && (
+                                                <span
+                                                    className="h-1.5 w-1.5 rounded-full bg-green-500"
+                                                    title="Tarefas concluídas"
+                                                />
+                                            )}
+                                            {indicators.hasEvents && (
+                                                <span
+                                                    className="h-1.5 w-1.5 rounded-full bg-purple-500"
+                                                    title="Eventos"
+                                                />
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </button>
