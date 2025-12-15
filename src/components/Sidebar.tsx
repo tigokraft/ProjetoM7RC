@@ -82,8 +82,26 @@ export default function Sidebar({
         if (workspacesRes.ok) {
           const workspacesData = await workspacesRes.json()
           setWorkspaces(workspacesData.workspaces || [])
-          if (workspacesData.workspaces?.length > 0) {
-            setCurrentWorkspace(workspacesData.workspaces[0])
+          
+          // Try to restore saved workspace from localStorage
+          const savedWorkspaceId = localStorage.getItem("activeWorkspaceId")
+          let workspaceToSet: Workspace | null = null
+
+          if (savedWorkspaceId && workspacesData.workspaces?.length > 0) {
+            // Find the saved workspace
+            workspaceToSet = workspacesData.workspaces.find(
+              (w: Workspace) => w.id === savedWorkspaceId
+            )
+          }
+
+          // If no saved workspace or it doesn't exist, use the first one
+          if (!workspaceToSet && workspacesData.workspaces?.length > 0) {
+            workspaceToSet = workspacesData.workspaces[0]
+          }
+
+          if (workspaceToSet) {
+            setCurrentWorkspace(workspaceToSet)
+            localStorage.setItem("activeWorkspaceId", workspaceToSet.id)
           }
         }
       } catch (error) {
@@ -94,6 +112,13 @@ export default function Sidebar({
     }
     fetchData()
   }, [])
+
+  const handleWorkspaceChange = (workspace: Workspace) => {
+    setCurrentWorkspace(workspace)
+    localStorage.setItem("activeWorkspaceId", workspace.id)
+    // Trigger a page refresh to reload data for the new workspace
+    window.location.reload()
+  }
 
   async function handleLogout() {
     try {
@@ -187,7 +212,7 @@ export default function Sidebar({
           <WorkspaceSwitcher
             workspaces={workspaces}
             currentWorkspace={currentWorkspace}
-            onWorkspaceChange={setCurrentWorkspace}
+            onWorkspaceChange={handleWorkspaceChange}
             isCollapsed={!isOpen}
           />
         </div>
