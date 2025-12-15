@@ -1,11 +1,24 @@
 "use client";
 
+import { useState } from "react";
+
 interface SidebarProps {
     isOpen: boolean;
     onToggle: () => void;
 }
 
+type ActivePage = "calendario" | "tarefas" | "eventos" | "notificacoes";
+
 export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
+    const [activePage, setActivePage] = useState<ActivePage>("calendario");
+
+    const navItems = [
+        { id: "calendario" as ActivePage, icon: "calendar_month", label: "Calendário" },
+        { id: "tarefas" as ActivePage, icon: "task", label: "Tarefas" },
+        { id: "eventos" as ActivePage, icon: "event", label: "Eventos" },
+        { id: "notificacoes" as ActivePage, icon: "notifications", label: "Notificações" },
+    ];
+
     return (
         <>
             {/* Botão fixo para toggle - sempre visível */}
@@ -31,22 +44,19 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
 
                 {/* Navegação */}
                 <nav className="flex-1 px-3 py-4 space-y-1">
-                    <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-[#1E40AF] bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                        <span className="material-symbols-outlined text-xl">calendar_month</span>
-                        <span className="text-sm font-medium">Calendário</span>
-                    </a>
-                    <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
-                        <span className="material-symbols-outlined text-xl">task</span>
-                        <span className="text-sm font-medium">Tarefas</span>
-                    </a>
-                    <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
-                        <span className="material-symbols-outlined text-xl">event</span>
-                        <span className="text-sm font-medium">Eventos</span>
-                    </a>
-                    <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
-                        <span className="material-symbols-outlined text-xl">notifications</span>
-                        <span className="text-sm font-medium">Notificações</span>
-                    </a>
+                    {navItems.map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => setActivePage(item.id)}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors w-full text-left ${activePage === item.id
+                                    ? 'text-[#1E40AF] bg-blue-50 hover:bg-blue-100'
+                                    : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                        >
+                            <span className="material-symbols-outlined text-xl">{item.icon}</span>
+                            <span className="text-sm font-medium">{item.label}</span>
+                        </button>
+                    ))}
                 </nav>
 
                 {/* Footer com usuário e settings */}
