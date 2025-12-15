@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
+import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import {
   DropdownMenu,
@@ -37,27 +38,9 @@ interface Workspace {
   type: "CLASS" | "PERSONAL"
 }
 
-export type ActivePage =
-  | "calendario"
-  | "tarefas"
-  | "eventos"
-  | "disciplinas"
-  | "grupos"
-
-interface SidebarProps {
-  isOpen: boolean
-  onToggle: () => void
-  activePage: ActivePage
-  onPageChange: (page: ActivePage) => void
-}
-
-export default function Sidebar({
-  isOpen,
-  onToggle,
-  activePage,
-  onPageChange,
-}: SidebarProps) {
+export default function Sidebar() {
   const router = useRouter()
+  const pathname = usePathname()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
@@ -65,6 +48,7 @@ export default function Sidebar({
     null
   )
   const [platformOpen, setPlatformOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(true)
 
   useEffect(() => {
     async function fetchData() {
@@ -81,27 +65,21 @@ export default function Sidebar({
 
         if (workspacesRes.ok) {
           const workspacesData = await workspacesRes.json()
-          setWorkspaces(workspacesData.workspaces || [])
-          
-          // Try to restore saved workspace from localStorage
-          const savedWorkspaceId = localStorage.getItem("activeWorkspaceId")
-          let workspaceToSet: Workspace | null = null
+          setWorkspaces(workspacesData.workspaces)
 
-          if (savedWorkspaceId && workspacesData.workspaces?.length > 0) {
-            // Find the saved workspace
-            workspaceToSet = workspacesData.workspaces.find(
+          // Initialize workspace from localStorage or use first one
+          const savedWorkspaceId = localStorage.getItem("activeWorkspaceId")
+          if (savedWorkspaceId) {
+            const savedWorkspace = workspacesData.workspaces.find(
               (w: Workspace) => w.id === savedWorkspaceId
             )
-          }
-
-          // If no saved workspace or it doesn't exist, use the first one
-          if (!workspaceToSet && workspacesData.workspaces?.length > 0) {
-            workspaceToSet = workspacesData.workspaces[0]
-          }
-
-          if (workspaceToSet) {
-            setCurrentWorkspace(workspaceToSet)
-            localStorage.setItem("activeWorkspaceId", workspaceToSet.id)
+            setCurrentWorkspace(savedWorkspace || workspacesData.workspaces[0])
+          } else if (workspacesData.workspaces.length > 0) {
+            setCurrentWorkspace(workspacesData.workspaces[0])
+            localStorage.setItem(
+              "activeWorkspaceId",
+              workspacesData.workspaces[0].id
+            )
           }
         }
       } catch (error) {
@@ -113,264 +91,165 @@ export default function Sidebar({
     fetchData()
   }, [])
 
+  const handleLogout = async () => {
+    document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    localStorage.removeItem("activeWorkspaceId")
+    router.push("/account/login")
+  }
+
   const handleWorkspaceChange = (workspace: Workspace) => {
     setCurrentWorkspace(workspace)
     localStorage.setItem("activeWorkspaceId", workspace.id)
-    // Trigger a page refresh to reload data for the new workspace
     window.location.reload()
   }
 
-  async function handleLogout() {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" })
-      router.push("/account/login")
-      router.refresh()
-    } catch (error) {
-      console.error("Logout failed:", error)
-    }
-  }
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
   const navItems = [
-    {
-      id: "calendario" as ActivePage,
-      icon: "calendar_month",
-      label: "Calendário",
-    },
-    { id: "tarefas" as ActivePage, icon: "task", label: "Tarefas" },
-    { id: "eventos" as ActivePage, icon: "event", label: "Eventos" },
-    {
-      id: "disciplinas" as ActivePage,
-      icon: "school",
-      label: "Disciplinas",
-    },
-    { id: "grupos" as ActivePage, icon: "group", label: "Grupos / Turmas" },
+    { name: "Calendário", icon: "calendar_month", href: "/dashboard" },
+    { name: "Tarefas", icon: "task_alt", href: "/dashboard/tasks" },
+    { name: "Eventos", icon: "event", href: "/dashboard/events" },
+    { name: "Disciplinas", icon: "school", href: "/dashboard/disciplines" },
+    { name: "Grupos / Turmas", icon: "groups", href: "/dashboard/groups" },
   ]
 
-  const NavItem = ({ item }: { item: typeof navItems[0] }) => {
-    const isActive = activePage === item.id
-    const content = (
-      <button
-        onClick={() => onPageChange(item.id)}
-        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-          isActive
-            ? "bg-slate-100 text-slate-900"
-            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-        } ${!isOpen ? "justify-center" : ""}`}
-      >
-        <span className="material-symbols-outlined text-xl">{item.icon}</span>
-        {isOpen && <span>{item.label}</span>}
-      </button>
-    )
-
-    if (!isOpen) {
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild>{content}</TooltipTrigger>
-          <TooltipContent side="right">
-            <p>{item.label}</p>
-          </TooltipContent>
-        </Tooltip>
-      )
+  const isActive = (href: string) => {
+    if (href === "/dashboard") {
+      return pathname === "/dashboard"
     }
-
-    return content
+    return pathname?.startsWith(href)
   }
 
   return (
-    <TooltipProvider delayDuration={0}>
-      {/* Toggle Button - Outside the sidebar */}
-      <button
-        onClick={onToggle}
-        className={`fixed top-4 z-50 flex size-8 items-center justify-center rounded-lg border bg-background shadow-sm transition-all hover:bg-accent ${
-          isOpen ? "left-[256px]" : "left-[60px]"
-        }`}
-      >
-        {isOpen ? (
-          <ChevronLeft className="size-4" />
-        ) : (
-          <ChevronRight className="size-4" />
-        )}
-      </button>
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed left-0 top-0 z-40 flex h-screen flex-col border-r bg-background shadow-sm transition-all duration-300 ${
+    <>
+      <div
+        className={`fixed left-0 top-0 h-screen bg-white border-r border-slate-200 transition-all duration-300 z-40 ${
           isOpen ? "w-64" : "w-[60px]"
         }`}
       >
-        {/* Workspace Switcher */}
-        <div className="border-b p-3">
-          <WorkspaceSwitcher
-            workspaces={workspaces}
-            currentWorkspace={currentWorkspace}
-            onWorkspaceChange={handleWorkspaceChange}
-            isCollapsed={!isOpen}
-          />
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {/* Platform Section */}
-          <div className="space-y-1">
-            {!isOpen ? (
-              <div className="mb-2 border-b pb-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex justify-center">
-                      <span className="material-symbols-outlined text-lg text-muted-foreground">
-                        apps
-                      </span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">
-                    <p>Platform</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            ) : (
-              <Collapsible open={platformOpen} onOpenChange={setPlatformOpen}>
-                <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-lg">
-                      apps
-                    </span>
-                    <span>Platform</span>
-                  </div>
-                  <ChevronRight
-                    className={`size-4 transition-transform ${
-                      platformOpen ? "rotate-90" : ""
-                    }`}
-                  />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-1 pl-2 pt-1">
-                  {navItems.slice(0, 3).map((item) => (
-                    <NavItem key={item.id} item={item} />
-                  ))}
-                </CollapsibleContent>
-              </Collapsible>
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="p-4 flex items-center justify-between border-b border-slate-200">
+            {isOpen && (
+              <h1 className="text-lg font-bold text-[#1E40AF]">Escola</h1>
             )}
-
-            {/* Collapsed mode - show icons directly */}
-            {!isOpen &&
-              navItems.slice(0, 3).map((item) => (
-                <NavItem key={item.id} item={item} />
-              ))}
           </div>
 
-          {/* Other items */}
-          <div className="space-y-1 pt-2">
-            {navItems.slice(3).map((item) => (
-              <NavItem key={item.id} item={item} />
-            ))}
-          </div>
-        </nav>
-
-        {/* User Section */}
-        <div className="border-t p-3">
-          {isLoading ? (
-            <div className="flex animate-pulse items-center gap-3">
-              <div className="size-9 rounded-full bg-slate-200"></div>
-              {isOpen && (
-                <div className="flex flex-col gap-1">
-                  <div className="h-3 w-20 rounded bg-slate-200"></div>
-                  <div className="h-2 w-24 rounded bg-slate-200"></div>
-                </div>
-              )}
+          {/* Workspace Switcher */}
+          {isOpen && currentWorkspace && (
+            <div className="p-3 border-b border-slate-200">
+              <WorkspaceSwitcher
+                workspaces={workspaces}
+                currentWorkspace={currentWorkspace}
+                onWorkspaceChange={handleWorkspaceChange}
+              />
             </div>
-          ) : user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+          )}
+
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto py-4">
+            <Collapsible open={platformOpen} onOpenChange={setPlatformOpen}>
+              <CollapsibleTrigger className="flex items-center w-full px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-50 transition-colors">
                 {isOpen ? (
-                  <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-slate-100 focus:outline-none">
-                    <div className="flex size-9 items-center justify-center rounded-full border border-gray-300 bg-primary text-sm font-medium text-primary-foreground">
-                      {getInitials(user.name)}
-                    </div>
-                    <div className="flex min-w-0 flex-1 flex-col text-left">
-                      <span className="truncate text-xs font-medium text-slate-800">
-                        {user.name}
-                      </span>
-                      <span className="truncate text-xs text-slate-500">
-                        {user.email}
-                      </span>
-                    </div>
-                    <span className="material-symbols-outlined text-lg text-slate-400">
-                      expand_more
-                    </span>
-                  </button>
+                  <>
+                    <span className="flex-1 text-left">Plataforma</span>
+                    <ChevronRight
+                      className={`w-4 h-4 transition-transform ${
+                        platformOpen ? "rotate-90" : ""
+                      }`}
+                    />
+                  </>
                 ) : (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button className="flex size-9 items-center justify-center rounded-full border border-gray-300 bg-primary text-sm font-medium text-primary-foreground transition-opacity hover:opacity-80">
-                        {getInitials(user.name)}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      <p>{user.name}</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <span className="material-symbols-outlined text-xl">
+                    dashboard
+                  </span>
                 )}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" side="top" className="w-56">
-                <DropdownMenuLabel>A minha conta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => router.push("/account/settings")}
-                >
-                  <span className="material-symbols-outlined mr-2 text-lg">
-                    person
-                  </span>
-                  Perfil
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => router.push("/account/settings")}
-                >
-                  <span className="material-symbols-outlined mr-2 text-lg">
-                    settings
-                  </span>
-                  Configurações
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    router.push("/account/settings?tab=notifications")
-                  }
-                >
-                  <span className="material-symbols-outlined mr-2 text-lg">
-                    notifications
-                  </span>
-                  Notificações
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <span className="material-symbols-outlined mr-2 text-lg">
-                    logout
-                  </span>
-                  Terminar sessão
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <a
-              href="/account/login"
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-600 transition-colors hover:bg-slate-100"
-            >
-              <span className="material-symbols-outlined text-xl">login</span>
-              {isOpen && <span className="text-sm font-medium">Entrar</span>}
-            </a>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="py-1">
+                  {navItems.map((item) => {
+                    const active = isActive(item.href)
+                    return (
+                      <TooltipProvider key={item.href} delayDuration={0}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link
+                              href={item.href}
+                              className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg transition-all ${
+                                active
+                                  ? "bg-blue-50 text-[#1E40AF] font-medium"
+                                  : "text-slate-600 hover:bg-slate-50"
+                              }`}
+                            >
+                              <span className="material-symbols-outlined text-xl">
+                                {item.icon}
+                              </span>
+                              {isOpen && (
+                                <span className="text-sm">{item.name}</span>
+                              )}
+                            </Link>
+                          </TooltipTrigger>
+                          {!isOpen && (
+                            <TooltipContent side="right">
+                              <p>{item.name}</p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+                    )
+                  })}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </nav>
+
+          {/* User Menu */}
+          {user && (
+            <div className="p-3 border-t border-slate-200">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                    <div className="size-8 rounded-full bg-[#1E40AF] flex items-center justify-center text-white font-medium">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    {isOpen && (
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-slate-800">
+                          {user.name}
+                        </p>
+                        <p className="text-xs text-slate-500">{user.email}</p>
+                      </div>
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
         </div>
-      </aside>
-    </TooltipProvider>
+      </div>
+
+      {/* Toggle Button (outside sidebar) */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`fixed top-4 z-50 bg-white border border-slate-200 rounded-lg p-2 shadow-md hover:shadow-lg transition-all ${
+          isOpen ? "left-[272px]" : "left-[68px]"
+        }`}
+        title={isOpen ? "Recolher sidebar" : "Expandir sidebar"}
+      >
+        {isOpen ? (
+          <ChevronLeft className="w-4 h-4 text-slate-600" />
+        ) : (
+          <ChevronRight className="w-4 h-4 text-slate-600" />
+        )}
+      </button>
+
+      {/* Spacer for main content */}
+      <div className={`${isOpen ? "ml-64" : "ml-[60px]"} transition-all duration-300`} />
+    </>
   )
 }
