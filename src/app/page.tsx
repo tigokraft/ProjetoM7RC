@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Header from "@/components/Header";
+import Sidebar from "@/components/Sidebar";
 import SearchBar from "@/components/SearchBar";
 import Calendar from "@/components/Calendar";
 import TaskSidebar from "@/components/TaskSidebar";
@@ -100,8 +100,8 @@ export default function Home() {
 
   return (
     <div className="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
-      <div className="layout-container flex h-full grow flex-col">
-        <Header />
+      <Sidebar />
+      <div className="layout-container flex h-full grow flex-col ml-64">
         <main className="flex flex-1 justify-center py-5 px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-7xl">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
