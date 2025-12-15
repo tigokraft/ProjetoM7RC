@@ -1,3 +1,14 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+
+interface User {
+    id: string
+    name: string
+    email: string
+}
+
 "use client";
 
 export type ActivePage = "calendario" | "tarefas" | "eventos" | "disciplinas" | "grupos";
@@ -10,6 +21,47 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onToggle, activePage, onPageChange }: SidebarProps) {
+    const router = useRouter()
+    const [user, setUser] = useState<User | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+
+    useEffect(() => {
+        async function fetchUser() {
+            try {
+                const response = await fetch("/api/user/me")
+                if (response.ok) {
+                    const data = await response.json()
+                    setUser(data.user)
+                }
+            } catch (error) {
+                console.error("Failed to fetch user:", error)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        fetchUser()
+    }, [])
+
+    async function handleLogout() {
+        try {
+            await fetch("/api/auth/logout", { method: "POST" })
+            router.push("/account/login")
+            router.refresh()
+        } catch (error) {
+            console.error("Logout failed:", error)
+        }
+    }
+
+    // Get initials for avatar
+    const getInitials = (name: string) => {
+        return name
+            .split(" ")
+            .map(n => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2)
+    }
+
     const navItems = [
         { id: "calendario" as ActivePage, icon: "calendar_month", label: "Calendário" },
         { id: "tarefas" as ActivePage, icon: "task", label: "Tarefas" },
@@ -41,51 +93,65 @@ export default function Sidebar({ isOpen, onToggle, activePage, onPageChange }: 
                     </h2>
                 </div>
 
-                {/* Navegação */}
-                <nav className="flex-1 px-3 py-4 space-y-1">
-                    {navItems.map((item) => (
-                        <button
-                            key={item.id}
-                            onClick={() => onPageChange(item.id)}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors w-full text-left ${activePage === item.id
-                                ? 'text-[#1E40AF] bg-blue-50 hover:bg-blue-100'
-                                : 'text-slate-600 hover:bg-slate-100'
-                                }`}
-                        >
-                            <span className="material-symbols-outlined text-xl">{item.icon}</span>
-                            <span className="text-sm font-medium">{item.label}</span>
-                        </button>
-                    ))}
-                </nav>
+            {/* Navegação */}
+            <nav className="flex-1 px-3 py-4 space-y-1">
+                <a href="/" className="flex items-center gap-3 px-3 py-2.5 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+                    <span className="material-symbols-outlined text-xl">calendar_month</span>
+                    <span className="text-sm font-medium">Calendário</span>
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
+                    <span className="material-symbols-outlined text-xl">task</span>
+                    <span className="text-sm font-medium">Tarefas</span>
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
+                    <span className="material-symbols-outlined text-xl">event</span>
+                    <span className="text-sm font-medium">Eventos</span>
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
+                    <span className="material-symbols-outlined text-xl">notifications</span>
+                    <span className="text-sm font-medium">Notificações</span>
+                </a>
+            </nav>
 
-                {/* Footer com usuário e settings */}
-                <div className="border-t border-gray-200 px-3 py-4">
-                    <button className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors w-full mb-2">
-                        <span className="material-symbols-outlined text-xl">settings</span>
-                        <span className="text-sm font-medium">Configurações</span>
-                    </button>
-                    <div className="flex items-center gap-3 px-3 py-2">
-                        <div
-                            className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 border border-gray-300"
-                            style={{
-                                backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuADoFMxUBXqh2Ma8CEiytBaZ_-DCKKc7uoFu41DWmuhL0X9-24HufLDpqi2-kBigVcs712Nj0xeZ8jIOsKzbguKyR7lLyuufXpouY5oHzctsUmUqaH6yobwYWPjyfvlP9rz4Rwq15JHKW1u9aTPPePxXMv4boB763zLSSCynrytQJAuHyDay5xEV0RhrNMWBrFsyCBJbLX2or8ExwH74FwBLzLNCN1ijEfVA_XOYERtSFFO4IjiLcq_WO3A2hcB7Aft-jEvyPf3t94')"
-                            }}
-                        ></div>
-                        <div className="flex flex-col">
-                            <span className="text-xs font-medium text-slate-800">Utilizador</span>
-                            <span className="text-xs text-slate-500">user@exemplo.com</span>
+            {/* Footer com usuário e settings */}
+            <div className="border-t border-gray-200 px-3 py-4">
+                <a href="/account/settings" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors w-full mb-2">
+                    <span className="material-symbols-outlined text-xl">settings</span>
+                    <span className="text-sm font-medium">Configurações</span>
+                </a>
+                
+                {isLoading ? (
+                    <div className="flex items-center gap-3 px-3 py-2 animate-pulse">
+                        <div className="size-9 rounded-full bg-slate-200"></div>
+                        <div className="flex flex-col gap-1">
+                            <div className="h-3 w-20 bg-slate-200 rounded"></div>
+                            <div className="h-2 w-24 bg-slate-200 rounded"></div>
                         </div>
                     </div>
-                </div>
-            </aside>
-
-            {/* Overlay quando sidebar está aberta em mobile */}
-            {isOpen && (
-                <div
-                    className="fixed inset-0 bg-black/20 z-30 lg:hidden"
-                    onClick={onToggle}
-                />
-            )}
-        </>
+                ) : user ? (
+                    <div className="flex items-center gap-3 px-3 py-2 group">
+                        <div className="flex items-center justify-center size-9 rounded-full bg-primary text-primary-foreground text-sm font-medium border border-gray-300">
+                            {getInitials(user.name)}
+                        </div>
+                        <div className="flex flex-col flex-1 min-w-0">
+                            <span className="text-xs font-medium text-slate-800 truncate">{user.name}</span>
+                            <span className="text-xs text-slate-500 truncate">{user.email}</span>
+                        </div>
+                        <button 
+                            onClick={handleLogout}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-slate-100 rounded"
+                            title="Sair"
+                        >
+                            <span className="material-symbols-outlined text-lg text-slate-500">logout</span>
+                        </button>
+                    </div>
+                ) : (
+                    <a href="/account/login" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
+                        <span className="material-symbols-outlined text-xl">login</span>
+                        <span className="text-sm font-medium">Entrar</span>
+                    </a>
+                )}
+            </div>
+        </aside>
     );
 }
