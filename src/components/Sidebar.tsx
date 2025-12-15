@@ -2,6 +2,14 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface User {
     id: string
@@ -91,66 +99,80 @@ export default function Sidebar({ isOpen, onToggle, activePage, onPageChange }: 
                     </h2>
                 </div>
 
-            {/* Navegação */}
-            <nav className="flex-1 px-3 py-4 space-y-1">
-                <a href="/" className="flex items-center gap-3 px-3 py-2.5 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
-                    <span className="material-symbols-outlined text-xl">calendar_month</span>
-                    <span className="text-sm font-medium">Calendário</span>
-                </a>
-                <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
-                    <span className="material-symbols-outlined text-xl">task</span>
-                    <span className="text-sm font-medium">Tarefas</span>
-                </a>
-                <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
-                    <span className="material-symbols-outlined text-xl">event</span>
-                    <span className="text-sm font-medium">Eventos</span>
-                </a>
-                <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
-                    <span className="material-symbols-outlined text-xl">notifications</span>
-                    <span className="text-sm font-medium">Notificações</span>
-                </a>
-            </nav>
-
-            {/* Footer com usuário e settings */}
-            <div className="border-t border-gray-200 px-3 py-4">
-                <a href="/account/settings" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors w-full mb-2">
-                    <span className="material-symbols-outlined text-xl">settings</span>
-                    <span className="text-sm font-medium">Configurações</span>
-                </a>
-                
-                {isLoading ? (
-                    <div className="flex items-center gap-3 px-3 py-2 animate-pulse">
-                        <div className="size-9 rounded-full bg-slate-200"></div>
-                        <div className="flex flex-col gap-1">
-                            <div className="h-3 w-20 bg-slate-200 rounded"></div>
-                            <div className="h-2 w-24 bg-slate-200 rounded"></div>
-                        </div>
-                    </div>
-                ) : user ? (
-                    <div className="flex items-center gap-3 px-3 py-2 group">
-                        <div className="flex items-center justify-center size-9 rounded-full bg-primary text-primary-foreground text-sm font-medium border border-gray-300">
-                            {getInitials(user.name)}
-                        </div>
-                        <div className="flex flex-col flex-1 min-w-0">
-                            <span className="text-xs font-medium text-slate-800 truncate">{user.name}</span>
-                            <span className="text-xs text-slate-500 truncate">{user.email}</span>
-                        </div>
-                        <button 
-                            onClick={handleLogout}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-slate-100 rounded"
-                            title="Sair"
-                        >
-                            <span className="material-symbols-outlined text-lg text-slate-500">logout</span>
-                        </button>
-                    </div>
-                ) : (
-                    <a href="/account/login" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
-                        <span className="material-symbols-outlined text-xl">login</span>
-                        <span className="text-sm font-medium">Entrar</span>
+                {/* Navegação */}
+                <nav className="flex-1 px-3 py-4 space-y-1">
+                    <a href="/" className="flex items-center gap-3 px-3 py-2.5 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+                        <span className="material-symbols-outlined text-xl">calendar_month</span>
+                        <span className="text-sm font-medium">Calendário</span>
                     </a>
-                )}
-            </div>
-        </aside>
+                    <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
+                        <span className="material-symbols-outlined text-xl">task</span>
+                        <span className="text-sm font-medium">Tarefas</span>
+                    </a>
+                    <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
+                        <span className="material-symbols-outlined text-xl">event</span>
+                        <span className="text-sm font-medium">Eventos</span>
+                    </a>
+                    <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
+                        <span className="material-symbols-outlined text-xl">notifications</span>
+                        <span className="text-sm font-medium">Notificações</span>
+                    </a>
+                </nav>
+
+                {/* Footer com usuário */}
+                <div className="border-t border-gray-200 px-3 py-4">
+                    {isLoading ? (
+                        <div className="flex items-center gap-3 px-3 py-2 animate-pulse">
+                            <div className="size-9 rounded-full bg-slate-200"></div>
+                            <div className="flex flex-col gap-1">
+                                <div className="h-3 w-20 bg-slate-200 rounded"></div>
+                                <div className="h-2 w-24 bg-slate-200 rounded"></div>
+                            </div>
+                        </div>
+                    ) : user ? (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="flex items-center gap-3 px-3 py-2 w-full rounded-lg hover:bg-slate-100 transition-colors focus:outline-none">
+                                    <div className="flex items-center justify-center size-9 rounded-full bg-primary text-primary-foreground text-sm font-medium border border-gray-300">
+                                        {getInitials(user.name)}
+                                    </div>
+                                    <div className="flex flex-col flex-1 min-w-0 text-left">
+                                        <span className="text-xs font-medium text-slate-800 truncate">{user.name}</span>
+                                        <span className="text-xs text-slate-500 truncate">{user.email}</span>
+                                    </div>
+                                    <span className="material-symbols-outlined text-lg text-slate-400">expand_more</span>
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" side="top" className="w-56">
+                                <DropdownMenuLabel>A minha conta</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => router.push("/account/settings")}>
+                                    <span className="material-symbols-outlined text-lg mr-2">person</span>
+                                    Perfil
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => router.push("/account/settings")}>
+                                    <span className="material-symbols-outlined text-lg mr-2">settings</span>
+                                    Configurações
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => router.push("/account/settings?tab=notifications")}>
+                                    <span className="material-symbols-outlined text-lg mr-2">notifications</span>
+                                    Notificações
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                                    <span className="material-symbols-outlined text-lg mr-2">logout</span>
+                                    Terminar sessão
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : (
+                        <a href="/account/login" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
+                            <span className="material-symbols-outlined text-xl">login</span>
+                            <span className="text-sm font-medium">Entrar</span>
+                        </a>
+                    )}
+                </div>
+            </aside>
         </>
     );
 }
