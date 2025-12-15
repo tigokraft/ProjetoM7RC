@@ -9,8 +9,6 @@ interface User {
     email: string
 }
 
-"use client";
-
 export type ActivePage = "calendario" | "tarefas" | "eventos" | "disciplinas" | "grupos";
 
 interface SidebarProps {
