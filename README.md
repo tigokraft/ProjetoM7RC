@@ -262,8 +262,6 @@ cd ProjetoM7RC
 
 ### 2. Instalar Dependências
 ```bash
-npm install
-# ou
 bun install
 ```
 
@@ -286,20 +284,18 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 ```bash
 # Gerar Prisma Client
-npx prisma generate
+bunx prisma generate
 
 # Criar/atualizar schema na BD
-npx prisma db push
+bunx prisma db push
 
 # (Opcional) Abrir Prisma Studio para visualizar dados
-npx prisma studio
+bunx prisma studio
 ```
 
 ### 5. Executar em Modo de Desenvolvimento
 
 ```bash
-npm run dev
-# ou
 bun run dev
 ```
 
@@ -308,8 +304,8 @@ A aplicação estará disponível em **http://localhost:3000**
 ### 6. Build para Produção
 
 ```bash
-npm run build
-npm start
+bun run build
+bun start
 ```
 
 ---
@@ -324,29 +320,29 @@ Este projeto utiliza **PostgreSQL** como sistema de persistência. Toda a gestã
 
 **1. Prisma Studio (Interface Visual)**
 ```bash
-npx prisma studio
+bunx prisma studio
 ```
 Abre em `http://localhost:5555` - permite visualizar e editar dados diretamente.
 
 **2. Migrations**
 ```bash
 # Criar migração após alterações no schema
-npx prisma migrate dev --name nome_da_migracao
+bunx prisma migrate dev --name nome_da_migracao
 
 # Aplicar migrations em produção
-npx prisma migrate deploy
+bunx prisma migrate deploy
 ```
 
 **3. Reset da Base de Dados**
 ```bash
 # ATENÇÃO: Apaga TODOS os dados!
-npx prisma migrate reset
+bunx prisma migrate reset
 ```
 
 **4. Seed (Popular BD com dados de teste)**
 ```bash
 # Se configurado em package.json
-npx prisma db seed
+bunx prisma db seed
 ```
 
 ### Estrutura de Dados
