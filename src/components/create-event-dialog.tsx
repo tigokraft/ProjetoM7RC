@@ -51,11 +51,15 @@ export default function CreateEventDialog({
 
     setIsSubmitting(true)
     try {
+      // Convert datetime-local format to ISO datetime with timezone
+      const startDateISO = new Date(startDate).toISOString()
+      const endDateISO = endDate ? new Date(endDate).toISOString() : undefined
+
       await onSubmit({
         title,
         description: description || undefined,
-        startDate,
-        endDate: endDate || undefined,
+        startDate: startDateISO,
+        endDate: endDateISO,
         location: location || undefined,
       })
       // Reset form
