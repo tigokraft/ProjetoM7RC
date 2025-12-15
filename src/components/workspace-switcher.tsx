@@ -172,8 +172,8 @@ export default function WorkspaceSwitcher({
         </PopoverContent>
       </Popover>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen} modal={true}>
+        <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Criar Workspace</DialogTitle>
             <DialogDescription>
@@ -193,6 +193,7 @@ export default function WorkspaceSwitcher({
                     handleCreateWorkspace()
                   }
                 }}
+                autoFocus
               />
             </div>
             <div className="space-y-2">
