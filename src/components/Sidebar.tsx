@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Settings, LogOut } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -250,11 +250,11 @@ export default function Sidebar() {
                   <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
-                    <span className="material-symbols-outlined text-base mr-2">settings</span>
+                    <Settings className="w-4 h-4 mr-2" />
                     Definições
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout}>
-                    <span className="material-symbols-outlined text-base mr-2">logout</span>
+                    <LogOut className="w-4 h-4 mr-2" />
                     Sair
                   </DropdownMenuItem>
                 </DropdownMenuContent>
