@@ -104,15 +104,6 @@ export default function Home() {
     },
   ];
 
-  // Eventos para a página de eventos (com tipos)
-  const allEvents = [
-    { id: 1, name: "Prova de Cálculo", date: "26 Dez", time: "09:00", type: "teste" as const, discipline: "Cálculo Avançado", description: "Prova sobre derivadas e integrais" },
-    { id: 2, name: "Entrega de Trabalho", date: "26 Dez", time: "14:00", type: "trabalho" as const, discipline: "Química Orgânica" },
-    { id: 3, name: "Apresentação do Projeto", date: "28 Dez", time: "10:00", type: "projeto" as const, discipline: "Programação" },
-    { id: 4, name: "Exercícios de laboratório", date: "20 Dez", time: "23:59", type: "tarefa" as const, discipline: "Física" },
-    { id: 5, name: "Teste de Inglês", date: "22 Dez", time: "11:00", type: "teste" as const, discipline: "Inglês" },
-  ];
-
   // Workspaces (mock data for now - in production this would come from the API)
   const workspaces = [
     { id: 1, name: "1º Semestre" },
@@ -215,7 +206,7 @@ export default function Home() {
       case "tarefas":
         return <TasksPage tasks={tasks} onToggleTask={toggleTask} />;
       case "eventos":
-        return <EventsPage events={allEvents} />;
+        return <EventsPage workspaceId={activeWorkspaceId} />;
       case "disciplinas":
         return <DisciplinesPage disciplines={disciplines} workspaces={workspaces} />;
       case "grupos":
