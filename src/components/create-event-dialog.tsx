@@ -28,6 +28,29 @@ interface CreateEventDialogProps {
   mode?: "create" | "edit"
 }
 
+// Helper function to format Date to dd-mm-yyyy
+const formatDateToDDMMYYYY = (date: Date) => {
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}-${month}-${year}`
+}
+
+// Helper function to format Date to HH:mm
+const formatTimeToHHMM = (date: Date) => {
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${hours}:${minutes}`
+}
+
+// Helper function to parse dd-mm-yyyy and HH:mm to ISO datetime
+const parseToISO = (dateStr: string, timeStr: string) => {
+  const [day, month, year] = dateStr.split('-').map(Number)
+  const [hours, minutes] = timeStr.split(':').map(Number)
+  const date = new Date(year, month - 1, day, hours, minutes)
+  return date.toISOString()
+}
+
 export default function CreateEventDialog({
   open,
   onOpenChange,
@@ -37,23 +60,32 @@ export default function CreateEventDialog({
 }: CreateEventDialogProps) {
   const [title, setTitle] = useState(event?.title || "")
   const [description, setDescription] = useState(event?.description || "")
-  const [startDate, setStartDate] = useState(
-    event?.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : ""
+  
+  // Separate date and time fields
+  const [startDateStr, setStartDateStr] = useState(
+    event?.startDate ? formatDateToDDMMYYYY(new Date(event.startDate)) : ""
   )
-  const [endDate, setEndDate] = useState(
-    event?.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : ""
+  const [startTimeStr, setStartTimeStr] = useState(
+    event?.startDate ? formatTimeToHHMM(new Date(event.startDate)) : ""
   )
+  const [endDateStr, setEndDateStr] = useState(
+    event?.endDate ? formatDateToDDMMYYYY(new Date(event.endDate)) : ""
+  )
+  const [endTimeStr, setEndTimeStr] = useState(
+    event?.endDate ? formatTimeToHHMM(new Date(event.endDate)) : ""
+  )
+  
   const [location, setLocation] = useState(event?.location || "")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async () => {
-    if (!title.trim() || !startDate) return
+    if (!title.trim() || !startDateStr || !startTimeStr) return
 
     setIsSubmitting(true)
     try {
-      // Convert datetime-local format to ISO datetime with timezone
-      const startDateISO = new Date(startDate).toISOString()
-      const endDateISO = endDate ? new Date(endDate).toISOString() : undefined
+      // Convert dd-mm-yyyy HH:mm format to ISO datetime
+      const startDateISO = parseToISO(startDateStr, startTimeStr)
+      const endDateISO = endDateStr && endTimeStr ? parseToISO(endDateStr, endTimeStr) : undefined
 
       await onSubmit({
         title,
@@ -66,8 +98,10 @@ export default function CreateEventDialog({
       if (mode === "create") {
         setTitle("")
         setDescription("")
-        setStartDate("")
-        setEndDate("")
+        setStartDateStr("")
+        setStartTimeStr("")
+        setEndDateStr("")
+        setEndTimeStr("")
         setLocation("")
       }
       onOpenChange(false)
@@ -76,19 +110,6 @@ export default function CreateEventDialog({
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  // Update form when event changes
-  if (event && mode === "edit") {
-    if (title !== event.title) setTitle(event.title)
-    if (description !== (event.description || "")) setDescription(event.description || "")
-    if (startDate !== new Date(event.startDate).toISOString().slice(0, 16)) {
-      setStartDate(new Date(event.startDate).toISOString().slice(0, 16))
-    }
-    if (event.endDate && endDate !== new Date(event.endDate).toISOString().slice(0, 16)) {
-      setEndDate(new Date(event.endDate).toISOString().slice(0, 16))
-    }
-    if (location !== (event.location || "")) setLocation(event.location || "")
   }
 
   return (
@@ -130,18 +151,42 @@ export default function CreateEventDialog({
               <Label htmlFor="startDate">Data de Início *</Label>
               <Input
                 id="startDate"
-                type="datetime-local"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                placeholder="dd-mm-yyyy"
+                value={startDateStr}
+                onChange={(e) => setStartDateStr(e.target.value)}
+                pattern="\d{2}-\d{2}-\d{4}"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="startTime">Hora *</Label>
+              <Input
+                id="startTime"
+                placeholder="HH:mm"
+                value={startTimeStr}
+                onChange={(e) => setStartTimeStr(e.target.value)}
+                pattern="\d{2}:\d{2}"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="endDate">Data de Fim</Label>
               <Input
                 id="endDate"
-                type="datetime-local"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                placeholder="dd-mm-yyyy"
+                value={endDateStr}
+                onChange={(e) => setEndDateStr(e.target.value)}
+                pattern="\d{2}-\d{2}-\d{4}"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="endTime">Hora</Label>
+              <Input
+                id="endTime"
+                placeholder="HH:mm"
+                value={endTimeStr}
+                onChange={(e) => setEndTimeStr(e.target.value)}
+                pattern="\d{2}:\d{2}"
               />
             </div>
           </div>
@@ -165,7 +210,7 @@ export default function CreateEventDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || !title.trim() || !startDate}
+            disabled={isSubmitting || !title.trim() || !startDateStr || !startTimeStr}
           >
             {isSubmitting
               ? mode === "create"
