@@ -258,12 +258,10 @@ export default function DashboardPage() {
       </aside>
       {selectedEvent && (
         <EventModal
-          event={{
-            eventName: selectedEvent.name,
-            eventTime: selectedEvent.time,
-            eventLocation: selectedEvent.location,
-            eventDescription: selectedEvent.description,
-          }}
+          eventName={selectedEvent.name}
+          eventTime={selectedEvent.time}
+          eventLocation={selectedEvent.location}
+          eventDescription={selectedEvent.description}
           isOpen={!!selectedEvent}
           onClose={() => setSelectedEvent(null)}
         />
