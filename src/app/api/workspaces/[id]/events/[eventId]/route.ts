@@ -43,7 +43,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     }
     
     // Get user's attendance status
-    const userAttendance = event.attendances.find(a => a.userId === user.id);
+    const userAttendance = event.attendances.find((a: typeof event.attendances[0]) => a.userId === user.id);
     
     return NextResponse.json({ event, userAttendanceStatus: userAttendance?.status || null });
   } catch (error) {
