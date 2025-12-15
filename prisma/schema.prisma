@@ -65,6 +65,8 @@ model Workspace {
   disciplines Discipline[]
   tasks       Task[]
   votes       Vote[]
+  inviteLinks WorkspaceInviteLink[]
+  invites     WorkspaceInvite[]
 
   @@map("workspaces")
 }
@@ -90,6 +92,41 @@ model WorkspaceMember {
 enum MemberRole {
   ADMIN
   USER
+}
+
+// ==================== WORKSPACE INVITATIONS ====================
+
+model WorkspaceInviteLink {
+  id          String    @id @default(cuid())
+  code        String    @unique @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdById String
+  maxUses     Int       @default(10)
+  uses        Int       @default(0)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@map("workspace_invite_links")
+}
+
+model WorkspaceInvite {
+  id          String       @id @default(cuid())
+  workspaceId String
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  email       String
+  invitedById String
+  status      InviteStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+
+  @@unique([workspaceId, email])
+  @@map("workspace_invites")
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }
 
 // ==================== GROUPS ====================

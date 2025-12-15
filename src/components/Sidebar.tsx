@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
 import WorkspaceSwitcher from "@/components/workspace-switcher"
+import NotificationsDropdown from "@/components/notifications-dropdown"
 
 interface User {
   id: string
@@ -147,7 +148,10 @@ export default function Sidebar() {
             isOpen ? "justify-between" : "justify-center"
           }`}>
             {isOpen ? (
-              <h1 className="text-lg font-bold text-[#1E40AF]">Escola</h1>
+              <>
+                <h1 className="text-lg font-bold text-[#1E40AF]">Escola</h1>
+                <NotificationsDropdown />
+              </>
             ) : (
               <span className="material-symbols-outlined text-2xl text-[#1E40AF]">school</span>
             )}
