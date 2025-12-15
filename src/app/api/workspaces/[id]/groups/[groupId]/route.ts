@@ -33,7 +33,8 @@ export async function GET(req: NextRequest, { params }: Params) {
       include: {
         members: {
           include: { user: { select: { id: true, name: true, email: true } } }
-        }
+        },
+        _count: { select: { members: true } }
       }
     });
     

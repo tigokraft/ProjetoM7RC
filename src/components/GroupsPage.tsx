@@ -594,22 +594,6 @@ export default function GroupsPage() {
                         <p className="text-slate-500 text-center py-4">Nenhum membro ainda.</p>
                     )}
                 </div>
-
-                {/* Calendário Partilhado do Grupo */}
-                <div className="bg-white rounded-xl shadow-md p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-slate-800">
-                            Calendário Partilhado
-                        </h2>
-                        <button className="flex items-center gap-2 px-4 py-2 bg-[#1E40AF] text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                            <span className="material-symbols-outlined text-lg">add</span>
-                            Adicionar Evento
-                        </button>
-                    </div>
-                    <p className="text-slate-500 text-center py-8">
-                        Calendário partilhado - todos os membros podem ver e adicionar eventos
-                    </p>
-                </div>
             </div>
         );
     }
