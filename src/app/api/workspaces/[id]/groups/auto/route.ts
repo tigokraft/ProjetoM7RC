@@ -52,7 +52,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     
     // Shuffle members randomly
     const shuffled = members
-      .map(m => m.userId)
+      .map((m: typeof members[0]) => m.userId)
       .sort(() => Math.random() - 0.5);
     
     // Calculate members per group
