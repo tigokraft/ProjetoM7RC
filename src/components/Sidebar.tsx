@@ -101,22 +101,19 @@ export default function Sidebar({ isOpen, onToggle, activePage, onPageChange }: 
 
                 {/* Navegação */}
                 <nav className="flex-1 px-3 py-4 space-y-1">
-                    <a href="/" className="flex items-center gap-3 px-3 py-2.5 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
-                        <span className="material-symbols-outlined text-xl">calendar_month</span>
-                        <span className="text-sm font-medium">Calendário</span>
-                    </a>
-                    <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
-                        <span className="material-symbols-outlined text-xl">task</span>
-                        <span className="text-sm font-medium">Tarefas</span>
-                    </a>
-                    <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
-                        <span className="material-symbols-outlined text-xl">event</span>
-                        <span className="text-sm font-medium">Eventos</span>
-                    </a>
-                    <a href="#" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
-                        <span className="material-symbols-outlined text-xl">notifications</span>
-                        <span className="text-sm font-medium">Notificações</span>
-                    </a>
+                    {navItems.map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => onPageChange(item.id)}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors w-full text-left ${activePage === item.id
+                                    ? "text-slate-700 bg-slate-100 hover:bg-slate-200"
+                                    : "text-slate-600 hover:bg-slate-100"
+                                }`}
+                        >
+                            <span className="material-symbols-outlined text-xl">{item.icon}</span>
+                            <span className="text-sm font-medium">{item.label}</span>
+                        </button>
+                    ))}
                 </nav>
 
                 {/* Footer com usuário */}
