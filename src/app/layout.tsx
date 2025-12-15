@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Lexend } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
 
 
 const lexend = Lexend({
@@ -28,8 +29,11 @@ export default function RootLayout({
         />
       </head>
       <body className={`${lexend.variable} font-display antialiased`}>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
 }
+
