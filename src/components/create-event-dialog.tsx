@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -59,27 +59,41 @@ export default function CreateEventDialog({
   event,
   mode = "create",
 }: CreateEventDialogProps) {
-  const [title, setTitle] = useState(event?.title || "")
-  const [description, setDescription] = useState(event?.description || "")
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
   
   // Date fields (as Date objects for Calendar component)
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    event?.startDate ? new Date(event.startDate) : undefined
-  )
-  const [endDate, setEndDate] = useState<Date | undefined>(
-    event?.endDate ? new Date(event.endDate) : undefined
-  )
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   
   // Time fields (as HH:mm strings)
-  const [startTime, setStartTime] = useState(
-    event?.startDate ? formatTimeToHHMM(new Date(event.startDate)) : "09:00"
-  )
-  const [endTime, setEndTime] = useState(
-    event?.endDate ? formatTimeToHHMM(new Date(event.endDate)) : "10:00"
-  )
+  const [startTime, setStartTime] = useState("09:00")
+  const [endTime, setEndTime] = useState("10:00")
   
-  const [location, setLocation] = useState(event?.location || "")
+  const [location, setLocation] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Sync form fields with event prop
+  useEffect(() => {
+    if (event) {
+      setTitle(event.title || "")
+      setDescription(event.description || "")
+      setStartDate(event.startDate ? new Date(event.startDate) : undefined)
+      setEndDate(event.endDate ? new Date(event.endDate) : undefined)
+      setStartTime(event.startDate ? formatTimeToHHMM(new Date(event.startDate)) : "09:00")
+      setEndTime(event.endDate ? formatTimeToHHMM(new Date(event.endDate)) : "10:00")
+      setLocation(event.location || "")
+    } else {
+      // Reset to defaults when event is null (create mode)
+      setTitle("")
+      setDescription("")
+      setStartDate(undefined)
+      setEndDate(undefined)
+      setStartTime("09:00")
+      setEndTime("10:00")
+      setLocation("")
+    }
+  }, [event])
 
   const handleSubmit = async () => {
     if (!title.trim() || !startDate || !startTime) return
