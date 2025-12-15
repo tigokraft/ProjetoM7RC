@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email not found" }, { status: 401 });
     }
 
-    if (!comparePassword(password, user.password)) {
+    if (!(await comparePassword(password, user.password))) {
       return NextResponse.json({ error: "Invalid password" }, { status: 401 });
     }
 
