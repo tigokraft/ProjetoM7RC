@@ -143,13 +143,17 @@ export default function Sidebar() {
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-4 flex items-center justify-between border-b border-slate-200">
-            {isOpen && (
+          <div className={`p-4 flex items-center border-b border-slate-200 ${
+            isOpen ? "justify-between" : "justify-center"
+          }`}>
+            {isOpen ? (
               <h1 className="text-lg font-bold text-[#1E40AF]">Escola</h1>
+            ) : (
+              <span className="material-symbols-outlined text-2xl text-[#1E40AF]">school</span>
             )}
           </div>
 
-          {/* Workspace Switcher */}
+          {/* Workspace Switcher - only show when open */}
           {isOpen && currentWorkspace && (
             <div className="p-3 border-b border-slate-200">
               <WorkspaceSwitcher
@@ -163,7 +167,9 @@ export default function Sidebar() {
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto py-4">
             <Collapsible open={platformOpen} onOpenChange={setPlatformOpen}>
-              <CollapsibleTrigger className="flex items-center w-full px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-50 transition-colors">
+              <CollapsibleTrigger className={`flex items-center w-full py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-50 transition-colors ${
+                isOpen ? "px-4" : "justify-center"
+              }`}>
                 {isOpen ? (
                   <>
                     <span className="flex-1 text-left">Plataforma</span>
@@ -189,7 +195,9 @@ export default function Sidebar() {
                           <TooltipTrigger asChild>
                             <Link
                               href={item.href}
-                              className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg transition-all ${
+                              className={`flex items-center gap-3 py-2.5 rounded-lg transition-all ${
+                                isOpen ? "px-4 mx-2" : "px-0 mx-0 w-full justify-center"
+                              } ${
                                 active
                                   ? "bg-blue-50 text-[#1E40AF] font-medium"
                                   : "text-slate-600 hover:bg-slate-50"
@@ -222,7 +230,9 @@ export default function Sidebar() {
             <div className="p-3 border-t border-slate-200">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                  <button className={`flex items-center gap-3 w-full p-2 rounded-lg hover:bg-slate-50 transition-colors ${
+                    isOpen ? "" : "justify-center"
+                  }`}>
                     <div className="size-8 rounded-full bg-[#1E40AF] flex items-center justify-center text-white font-medium">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
