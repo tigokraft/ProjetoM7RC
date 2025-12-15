@@ -249,7 +249,12 @@ export default function Sidebar() {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <span className="material-symbols-outlined text-base mr-2">settings</span>
+                    Definições
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout}>
+                    <span className="material-symbols-outlined text-base mr-2">logout</span>
                     Sair
                   </DropdownMenuItem>
                 </DropdownMenuContent>
