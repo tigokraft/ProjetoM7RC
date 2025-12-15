@@ -89,21 +89,21 @@ export default function Calendar({
                     <button
                         onClick={goToPreviousMonth}
                         disabled={!canGoPrevious}
-                        className={`hover:bg-[#009EE2]/10 rounded-full transition-colors ${!canGoPrevious ? 'opacity-30 cursor-not-allowed' : ''}`}
+                        className={`hover:bg-slate-100 rounded-full transition-colors ${!canGoPrevious ? 'opacity-30 cursor-not-allowed' : ''}`}
                     >
-                        <div className="text-[#07396E] flex size-10 items-center justify-center">
+                        <div className="text-slate-600 flex size-10 items-center justify-center">
                             <span className="material-symbols-outlined text-lg">chevron_left</span>
                         </div>
                     </button>
-                    <p className="text-[#07396E] text-base font-bold leading-tight flex-1 text-center">
+                    <p className="text-slate-800 text-base font-bold leading-tight flex-1 text-center">
                         {MONTH_NAMES[currentMonth]} {currentYear}
                     </p>
                     <button
                         onClick={goToNextMonth}
                         disabled={!canGoNext}
-                        className={`hover:bg-[#009EE2]/10 rounded-full transition-colors ${!canGoNext ? 'opacity-30 cursor-not-allowed' : ''}`}
+                        className={`hover:bg-slate-100 rounded-full transition-colors ${!canGoNext ? 'opacity-30 cursor-not-allowed' : ''}`}
                     >
-                        <div className="text-[#07396E] flex size-10 items-center justify-center">
+                        <div className="text-slate-600 flex size-10 items-center justify-center">
                             <span className="material-symbols-outlined text-lg">chevron_right</span>
                         </div>
                     </button>
@@ -112,7 +112,7 @@ export default function Calendar({
                     {["D", "S", "T", "Q", "Q", "S", "S"].map((day, index) => (
                         <p
                             key={index}
-                            className="text-[#07396E] text-sm font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5"
+                            className="text-slate-600 text-sm font-bold leading-normal tracking-[0.015em] flex h-12 w-full items-center justify-center pb-0.5"
                         >
                             {day}
                         </p>
@@ -138,16 +138,16 @@ export default function Calendar({
                             <button
                                 key={day}
                                 onClick={() => onDateSelect(day)}
-                                className={`h-12 w-full text-sm font-bold leading-normal transition-all duration-200 ${isSelected
-                                        ? 'text-white scale-105'
-                                        : 'text-[#07396E] hover:bg-[#009EE2]/15 hover:scale-105'
+                                className={`h-14 w-full text-sm font-bold leading-normal transition-all duration-200 ${isSelected
+                                    ? 'text-white scale-105'
+                                    : 'text-slate-700 hover:bg-blue-100 hover:scale-105'
                                     }`}
                             >
-                                <div className={`flex size-full items-center justify-center rounded-lg relative ${isSelected ? 'bg-gradient-to-br from-[#009EE2] to-[#07396E] shadow-lg' : ''
+                                <div className={`flex size-full flex-col items-center justify-center rounded-lg relative ${isSelected ? 'bg-[#1E40AF] shadow-lg' : ''
                                     }`}>
-                                    {day}
+                                    <span>{day}</span>
                                     {dayHasEvent && (
-                                        <span className={`absolute bottom-2 h-2 w-2 rounded-full ${isSelected ? 'bg-[#FDB515] ring-2 ring-white' : 'bg-[#FDB515]'
+                                        <span className={`mt-1 h-1.5 w-1.5 rounded-full ${isSelected ? 'bg-amber-400' : 'bg-amber-500'
                                             }`}></span>
                                     )}
                                 </div>
