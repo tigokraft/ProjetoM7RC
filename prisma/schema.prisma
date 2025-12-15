@@ -30,6 +30,7 @@ model User {
   taskCompletions   TaskCompletion[]
   notifications     Notification[]
   notificationPrefs NotificationPreference?
+  chatMessages      ChatMessage[]
 
   @@map("users")
 }
@@ -67,6 +68,7 @@ model Workspace {
   votes       Vote[]
   inviteLinks WorkspaceInviteLink[]
   invites     WorkspaceInvite[]
+  chatMessages ChatMessage[]
 
   @@map("workspaces")
 }
@@ -339,4 +341,19 @@ model NotificationPreference {
   reminderOnDay      Boolean             @default(true)
   
   @@map("notification_preferences")
+}
+
+// ==================== CHAT ====================
+
+model ChatMessage {
+  id          String    @id @default(cuid())
+  content     String
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@map("chat_messages")
 }

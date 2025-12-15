@@ -206,6 +206,8 @@ export interface Vote {
     title: string;
     description: string | null;
     expiresAt: string | null;
+    createdAt: string;
+    createdBy: { id: string; name: string };
     options: VoteOption[];
 }
 

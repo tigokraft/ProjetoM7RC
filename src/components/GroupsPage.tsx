@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { groupsAPI, workspacesAPI } from "@/lib/api";
 import type { Group as APIGroup, Member, Workspace } from "@/types/api-types";
+import VotingSection from "./voting-section";
+import WorkspaceChat from "./workspace-chat";
 
 export default function GroupsPage() {
     const [groups, setGroups] = useState<APIGroup[]>([]);
@@ -10,12 +12,15 @@ export default function GroupsPage() {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false);
+    const [showAutoGenerateModal, setShowAutoGenerateModal] = useState(false);
     const [newGroup, setNewGroup] = useState({ name: "" });
     const [newWorkspaceName, setNewWorkspaceName] = useState("");
+    const [autoGenerateSettings, setAutoGenerateSettings] = useState({ groupCount: 4, groupNamePrefix: "Grupo" });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [workspaceId, setWorkspaceId] = useState<string | null>(null);
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
     // Fetch workspaces first
     useEffect(() => {
@@ -27,6 +32,12 @@ export default function GroupsPage() {
                     setWorkspaceId(data.workspaces[0].id);
                 } else {
                     setLoading(false);
+                }
+                // Get current user ID from auth
+                const meRes = await fetch("/api/auth/me", { credentials: "include" });
+                if (meRes.ok) {
+                    const meData = await meRes.json();
+                    setCurrentUserId(meData.user?.id || null);
                 }
             } catch (err) {
                 console.error("Failed to fetch workspaces:", err);
@@ -133,6 +144,22 @@ export default function GroupsPage() {
         return colors[Math.abs(index)];
     };
 
+    // Auto-generate groups
+    const handleAutoGenerate = async () => {
+        if (!workspaceId) return;
+        
+        try {
+            setLoading(true);
+            await groupsAPI.autoGenerate(workspaceId, autoGenerateSettings.groupCount, autoGenerateSettings.groupNamePrefix);
+            setShowAutoGenerateModal(false);
+            await fetchGroups();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Erro ao gerar grupos automaticamente");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Modal de Criar Workspace
     const CreateWorkspaceModal = () => (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateWorkspaceModal(false)}>
@@ -226,6 +253,62 @@ export default function GroupsPage() {
                             <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div>
                         ) : null}
                         Criar Grupo
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Modal de Auto-Gerar Grupos
+    const AutoGenerateModal = () => (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowAutoGenerateModal(false)}>
+            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+                <h2 className="text-xl font-bold text-slate-800 mb-2">Gerar Grupos Automaticamente</h2>
+                <p className="text-sm text-slate-500 mb-4">Os membros do workspace serão distribuídos aleatoriamente pelos grupos.</p>
+
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Número de Grupos</label>
+                        <input
+                            type="number"
+                            min={2}
+                            max={50}
+                            value={autoGenerateSettings.groupCount}
+                            onChange={(e) => setAutoGenerateSettings({ ...autoGenerateSettings, groupCount: parseInt(e.target.value) || 2 })}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Prefixo do Nome</label>
+                        <input
+                            type="text"
+                            value={autoGenerateSettings.groupNamePrefix}
+                            onChange={(e) => setAutoGenerateSettings({ ...autoGenerateSettings, groupNamePrefix: e.target.value })}
+                            placeholder="Ex: Grupo"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-slate-400 mt-1">Os grupos serão nomeados: {autoGenerateSettings.groupNamePrefix} 1, {autoGenerateSettings.groupNamePrefix} 2, etc.</p>
+                    </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                    <button
+                        onClick={() => setShowAutoGenerateModal(false)}
+                        className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleAutoGenerate}
+                        disabled={autoGenerateSettings.groupCount < 2 || loading}
+                        className="flex-1 px-4 py-2 bg-[#1E40AF] text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {loading ? (
+                            <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div>
+                        ) : (
+                            <span className="material-symbols-outlined text-lg">shuffle</span>
+                        )}
+                        Gerar Grupos
                     </button>
                 </div>
             </div>
@@ -414,6 +497,7 @@ export default function GroupsPage() {
         <div className="flex flex-col gap-6">
             {showCreateModal && <CreateGroupModal />}
             {showCreateWorkspaceModal && <CreateWorkspaceModal />}
+            {showAutoGenerateModal && <AutoGenerateModal />}
 
             <div className="flex items-center justify-between">
                 <div>
@@ -439,13 +523,23 @@ export default function GroupsPage() {
                         </div>
                     )}
                 </div>
-                <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#1E40AF] text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                >
-                    <span className="material-symbols-outlined text-lg">add</span>
-                    Criar Grupo
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowAutoGenerateModal(true)}
+                        className="flex items-center gap-2 px-4 py-2 border border-[#1E40AF] text-[#1E40AF] rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium"
+                        title="Gerar grupos automaticamente"
+                    >
+                        <span className="material-symbols-outlined text-lg">shuffle</span>
+                        Auto-Gerar
+                    </button>
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-[#1E40AF] text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    >
+                        <span className="material-symbols-outlined text-lg">add</span>
+                        Criar Grupo
+                    </button>
+                </div>
             </div>
 
             {/* Lista de Grupos */}
@@ -495,6 +589,16 @@ export default function GroupsPage() {
                     })
                 )}
             </div>
+
+            {/* Votações e Chat */}
+            {workspaceId && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                    <VotingSection workspaceId={workspaceId} isAdmin={true} />
+                    {currentUserId && (
+                        <WorkspaceChat workspaceId={workspaceId} currentUserId={currentUserId} />
+                    )}
+                </div>
+            )}
         </div>
     );
 }
