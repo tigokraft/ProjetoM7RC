@@ -218,7 +218,7 @@ export default function Home() {
         activePage={activePage}
         onPageChange={setActivePage}
       />
-      <div className={`layout-container flex h-full grow flex-col transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div className={`layout-container flex h-full grow flex-col transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-[60px]'}`}>
         <main className="flex flex-1 justify-center py-5 px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-7xl">
             {renderContent()}
