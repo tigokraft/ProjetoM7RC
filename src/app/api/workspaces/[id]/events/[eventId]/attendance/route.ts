@@ -52,10 +52,10 @@ export async function GET(req: NextRequest, { params }: Params) {
     // Get summary stats
     const summary = {
       total: attendances.length,
-      present: attendances.filter(a => a.status === "PRESENT").length,
-      absent: attendances.filter(a => a.status === "ABSENT").length,
-      excused: attendances.filter(a => a.status === "EXCUSED").length,
-      pending: attendances.filter(a => a.status === "PENDING").length,
+      present: attendances.filter((a: typeof attendances[0]) => a.status === "PRESENT").length,
+      absent: attendances.filter((a: typeof attendances[0]) => a.status === "ABSENT").length,
+      excused: attendances.filter((a: typeof attendances[0]) => a.status === "EXCUSED").length,
+      pending: attendances.filter((a: typeof attendances[0]) => a.status === "PENDING").length,
     };
     
     return NextResponse.json({ attendances, summary, eventTitle: event.title });
