@@ -61,7 +61,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     
     // Transform to calendar items
     const calendarItems = [
-      ...events.map(event => ({
+      ...events.map((event: typeof events[0]) => ({
         id: event.id,
         type: "event" as const,
         title: event.title,
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest, { params }: Params) {
         createdBy: event.createdBy,
         attendanceCount: event._count.attendances
       })),
-      ...tasks.map(task => ({
+      ...tasks.map((task: typeof tasks[0]) => ({
         id: task.id,
         type: "task" as const,
         title: task.title,
