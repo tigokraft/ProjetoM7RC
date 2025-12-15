@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Sidebar, { ActivePage } from "@/components/Sidebar";
 import SearchBar from "@/components/SearchBar";
-import Calendar from "@/components/ui/Calendar";
+import { Calendar } from "@/components/ui/calendar";
 import TaskSidebar from "@/components/TaskSidebar";
 import EventModal from "@/components/EventModal";
 import TasksPage from "@/components/TasksPage";
