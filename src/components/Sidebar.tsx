@@ -50,6 +50,22 @@ export default function Sidebar() {
   const [platformOpen, setPlatformOpen] = useState(true)
   const [isOpen, setIsOpen] = useState(true)
 
+  // Initialize sidebar state from localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem("sidebarOpen")
+    if (savedState !== null) {
+      setIsOpen(savedState !== "false")
+    }
+  }, [])
+
+  // Update localStorage and dispatch event when state changes
+  const toggleSidebar = () => {
+    const newState = !isOpen
+    setIsOpen(newState)
+    localStorage.setItem("sidebarOpen", String(newState))
+    window.dispatchEvent(new Event("sidebarToggle"))
+  }
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -235,7 +251,7 @@ export default function Sidebar() {
 
       {/* Toggle Button (outside sidebar) */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleSidebar}
         className={`fixed top-4 z-50 bg-white border border-slate-200 rounded-lg p-2 shadow-md hover:shadow-lg transition-all ${
           isOpen ? "left-[272px]" : "left-[68px]"
         }`}
@@ -247,9 +263,6 @@ export default function Sidebar() {
           <ChevronRight className="w-4 h-4 text-slate-600" />
         )}
       </button>
-
-      {/* Spacer for main content */}
-      <div className={`${isOpen ? "ml-64" : "ml-[60px]"} transition-all duration-300`} />
     </>
   )
 }
