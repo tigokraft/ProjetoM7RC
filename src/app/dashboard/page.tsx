@@ -242,9 +242,7 @@ export default function DashboardPage() {
         <TaskSidebar
           tasks={dayEvents.filter((e) => e.type === "task").map((e, idx) => ({
             id: idx + 1,
-            name: e.name,
-            subject: e.location,
-            dueDate: e.time,
+            title: e.name,
             completed: e.isCompleted || false,
           }))}
           onToggleTask={(id) => {
