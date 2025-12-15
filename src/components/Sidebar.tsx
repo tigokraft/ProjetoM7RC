@@ -1,6 +1,6 @@
 "use client";
 
-export type ActivePage = "calendario" | "tarefas" | "eventos" | "disciplinas";
+export type ActivePage = "calendario" | "tarefas" | "eventos" | "disciplinas" | "grupos";
 
 interface SidebarProps {
     isOpen: boolean;
@@ -15,6 +15,7 @@ export default function Sidebar({ isOpen, onToggle, activePage, onPageChange }: 
         { id: "tarefas" as ActivePage, icon: "task", label: "Tarefas" },
         { id: "eventos" as ActivePage, icon: "event", label: "Eventos" },
         { id: "disciplinas" as ActivePage, icon: "school", label: "Disciplinas" },
+        { id: "grupos" as ActivePage, icon: "group", label: "Grupos / Turmas" },
     ];
 
     return (
@@ -47,8 +48,8 @@ export default function Sidebar({ isOpen, onToggle, activePage, onPageChange }: 
                             key={item.id}
                             onClick={() => onPageChange(item.id)}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors w-full text-left ${activePage === item.id
-                                    ? 'text-[#1E40AF] bg-blue-50 hover:bg-blue-100'
-                                    : 'text-slate-600 hover:bg-slate-100'
+                                ? 'text-[#1E40AF] bg-blue-50 hover:bg-blue-100'
+                                : 'text-slate-600 hover:bg-slate-100'
                                 }`}
                         >
                             <span className="material-symbols-outlined text-xl">{item.icon}</span>

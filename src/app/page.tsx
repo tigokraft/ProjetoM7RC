@@ -3,12 +3,13 @@
 import { useState, useMemo } from "react";
 import Sidebar, { ActivePage } from "@/components/Sidebar";
 import SearchBar from "@/components/SearchBar";
-import Calendar from "@/components/Calendar";
+import Calendar from "@/components/ui/Calendar";
 import TaskSidebar from "@/components/TaskSidebar";
 import EventModal from "@/components/EventModal";
 import TasksPage from "@/components/TasksPage";
 import EventsPage from "@/components/EventsPage";
 import DisciplinesPage from "@/components/DisciplinesPage";
+import GroupsPage from "@/components/GroupsPage";
 import { CalendarEvent } from "@/types/calendar";
 import { Task } from "@/types/task";
 import { DayEvent } from "@/types/event";
@@ -122,6 +123,46 @@ export default function Home() {
     { id: 6, name: "Música", teacher: "Prof. Rita Fonseca", color: "#0891B2", workspaceId: 3 },
   ];
 
+  // Grupos / Turmas
+  const groups = [
+    {
+      id: 1,
+      name: "Turma A - Informática",
+      description: "Turma do curso de Informática, 1º ano",
+      color: "#1E40AF",
+      eventsCount: 8,
+      members: [
+        { id: 1, name: "Ana Silva", avatar: "https://i.pravatar.cc/150?img=1", role: "admin" as const },
+        { id: 2, name: "João Costa", avatar: "https://i.pravatar.cc/150?img=2", role: "member" as const },
+        { id: 3, name: "Maria Santos", avatar: "https://i.pravatar.cc/150?img=3", role: "member" as const },
+        { id: 4, name: "Pedro Lima", avatar: "https://i.pravatar.cc/150?img=4", role: "member" as const },
+      ],
+    },
+    {
+      id: 2,
+      name: "Grupo de Estudo - Cálculo",
+      description: "Grupo para estudar para os exames de Cálculo",
+      color: "#059669",
+      eventsCount: 3,
+      members: [
+        { id: 1, name: "Ana Silva", avatar: "https://i.pravatar.cc/150?img=1", role: "admin" as const },
+        { id: 5, name: "Rita Fonseca", avatar: "https://i.pravatar.cc/150?img=5", role: "member" as const },
+      ],
+    },
+    {
+      id: 3,
+      name: "Turma B - Engenharia",
+      description: "Turma do curso de Engenharia Mecânica",
+      color: "#7C3AED",
+      eventsCount: 12,
+      members: [
+        { id: 6, name: "Carlos Mendes", avatar: "https://i.pravatar.cc/150?img=6", role: "admin" as const },
+        { id: 7, name: "Sofia Rodrigues", avatar: "https://i.pravatar.cc/150?img=7", role: "member" as const },
+        { id: 8, name: "Miguel Ferreira", avatar: "https://i.pravatar.cc/150?img=8", role: "member" as const },
+      ],
+    },
+  ];
+
   // Filtrar eventos do dia selecionado
   const dayEvents = useMemo(() =>
     allDayEvents.filter(event => event.date === selectedDate),
@@ -162,6 +203,8 @@ export default function Home() {
         return <EventsPage events={allEvents} />;
       case "disciplinas":
         return <DisciplinesPage disciplines={disciplines} workspaces={workspaces} />;
+      case "grupos":
+        return <GroupsPage groups={groups} />;
       default:
         return null;
     }
