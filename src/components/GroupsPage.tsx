@@ -13,6 +13,7 @@ export default function GroupsPage() {
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false);
     const [showAutoGenerateModal, setShowAutoGenerateModal] = useState(false);
+    const [showAddMemberModal, setShowAddMemberModal] = useState(false);
     const [newGroup, setNewGroup] = useState({ name: "" });
     const [newWorkspaceName, setNewWorkspaceName] = useState("");
     const [autoGenerateSettings, setAutoGenerateSettings] = useState({ groupCount: 4, groupNamePrefix: "Grupo" });
@@ -21,6 +22,9 @@ export default function GroupsPage() {
     const [workspaceId, setWorkspaceId] = useState<string | null>(null);
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [workspaceMembers, setWorkspaceMembers] = useState<Member[]>([]);
+    const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+    const [addingMembers, setAddingMembers] = useState(false);
 
     // Fetch workspaces first
     useEffect(() => {
@@ -355,6 +359,105 @@ export default function GroupsPage() {
         </div>
     );
 
+    // Handler to add members to group
+    const handleAddMembers = async () => {
+        if (!workspaceId || !selectedGroup || selectedMemberIds.length === 0) return;
+
+        setAddingMembers(true);
+        try {
+            for (const userId of selectedMemberIds) {
+                await groupsAPI.addMember(workspaceId, selectedGroup.id, userId);
+            }
+            // Refresh the group details
+            const data = await groupsAPI.get(workspaceId, selectedGroup.id);
+            setSelectedGroup(data.group);
+            setShowAddMemberModal(false);
+            setSelectedMemberIds([]);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Erro ao adicionar membros");
+        } finally {
+            setAddingMembers(false);
+        }
+    };
+
+    // Modal de Adicionar Membros ao Grupo
+    const AddMemberModal = () => {
+        // Filter out members who are already in the group
+        const existingMemberIds = selectedGroup?.members?.map((m: Member) => m.user.id) || [];
+        const availableMembers = workspaceMembers.filter(
+            (m) => !existingMemberIds.includes(m.user.id)
+        );
+
+        const toggleMember = (userId: string) => {
+            setSelectedMemberIds((prev) =>
+                prev.includes(userId)
+                    ? prev.filter((id) => id !== userId)
+                    : [...prev, userId]
+            );
+        };
+
+        return (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowAddMemberModal(false)}>
+                <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">Adicionar Membros</h2>
+                    <p className="text-sm text-slate-500 mb-4">
+                        Seleciona membros do workspace para adicionar ao grupo "{selectedGroup?.name}".
+                    </p>
+
+                    {availableMembers.length === 0 ? (
+                        <p className="text-slate-500 text-center py-4">
+                            Todos os membros do workspace já estão neste grupo.
+                        </p>
+                    ) : (
+                        <div className="max-h-64 overflow-y-auto space-y-2 mb-4">
+                            {availableMembers.map((member) => (
+                                <button
+                                    key={member.id}
+                                    onClick={() => toggleMember(member.user.id)}
+                                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                                        selectedMemberIds.includes(member.user.id)
+                                            ? "border-[#1E40AF] bg-blue-50"
+                                            : "border-slate-200 hover:border-slate-300"
+                                    }`}
+                                >
+                                    <div className="size-10 rounded-full bg-slate-300 flex items-center justify-center text-white font-medium">
+                                        {member.user.name.charAt(0)}
+                                    </div>
+                                    <div className="flex-1 text-left">
+                                        <p className="font-medium text-slate-700">{member.user.name}</p>
+                                        <p className="text-xs text-slate-400">{member.user.email}</p>
+                                    </div>
+                                    {selectedMemberIds.includes(member.user.id) && (
+                                        <span className="material-symbols-outlined text-[#1E40AF]">check_circle</span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setShowAddMemberModal(false)}
+                            className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleAddMembers}
+                            disabled={selectedMemberIds.length === 0 || addingMembers}
+                            className="flex-1 px-4 py-2 bg-[#1E40AF] text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {addingMembers ? (
+                                <div className="animate-spin rounded-full size-4 border-b-2 border-white"></div>
+                            ) : null}
+                            Adicionar ({selectedMemberIds.length})
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     // Loading state
     if (loading && groups.length === 0 && workspaces.length > 0) {
         return (
@@ -403,6 +506,7 @@ export default function GroupsPage() {
         return (
             <div className="flex flex-col gap-6">
                 {showLeaveModal && <LeaveGroupModal />}
+                {showAddMemberModal && <AddMemberModal />}
 
                 <div className="flex items-center justify-between">
                     <button
@@ -441,7 +545,25 @@ export default function GroupsPage() {
                         <h2 className="text-lg font-semibold text-slate-800">
                             Membros ({selectedGroup.members?.length || 0})
                         </h2>
-                        <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-[#1E40AF] border border-[#1E40AF] rounded-lg hover:bg-blue-50 transition-colors">
+                        <button 
+                            onClick={async () => {
+                                // Fetch workspace members first
+                                if (workspaceId) {
+                                    try {
+                                        const res = await fetch(`/api/workspaces/${workspaceId}/members`, { credentials: "include" });
+                                        if (res.ok) {
+                                            const data = await res.json();
+                                            setWorkspaceMembers(data.members || []);
+                                        }
+                                    } catch (err) {
+                                        console.error("Failed to fetch members:", err);
+                                    }
+                                }
+                                setSelectedMemberIds([]);
+                                setShowAddMemberModal(true);
+                            }}
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm text-[#1E40AF] border border-[#1E40AF] rounded-lg hover:bg-blue-50 transition-colors"
+                        >
                             <span className="material-symbols-outlined text-lg">person_add</span>
                             Convidar
                         </button>
