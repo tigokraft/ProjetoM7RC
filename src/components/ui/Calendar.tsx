@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarEvent } from "@/types/calendar";
+import { CalendarEvent } from "@/components/ui/calendar";
 
 interface CalendarProps {
     events: CalendarEvent[];

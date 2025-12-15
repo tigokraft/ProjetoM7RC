@@ -12,6 +12,15 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+import { pt } from "date-fns/locale"
 import type { Event } from "@/types/api-types"
 
 interface CreateEventDialogProps {
@@ -28,27 +37,19 @@ interface CreateEventDialogProps {
   mode?: "create" | "edit"
 }
 
-// Helper function to format Date to dd-mm-yyyy
-const formatDateToDDMMYYYY = (date: Date) => {
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = date.getFullYear()
-  return `${day}-${month}-${year}`
-}
-
-// Helper function to format Date to HH:mm
+// Helper function to format time to HH:mm
 const formatTimeToHHMM = (date: Date) => {
   const hours = String(date.getHours()).padStart(2, '0')
   const minutes = String(date.getMinutes()).padStart(2, '0')
   return `${hours}:${minutes}`
 }
 
-// Helper function to parse dd-mm-yyyy and HH:mm to ISO datetime
-const parseToISO = (dateStr: string, timeStr: string) => {
-  const [day, month, year] = dateStr.split('-').map(Number)
+// Helper function to combine date and time to ISO datetime
+const combineDateTime = (date: Date, timeStr: string) => {
   const [hours, minutes] = timeStr.split(':').map(Number)
-  const date = new Date(year, month - 1, day, hours, minutes)
-  return date.toISOString()
+  const combined = new Date(date)
+  combined.setHours(hours, minutes, 0, 0)
+  return combined.toISOString()
 }
 
 export default function CreateEventDialog({
@@ -61,31 +62,33 @@ export default function CreateEventDialog({
   const [title, setTitle] = useState(event?.title || "")
   const [description, setDescription] = useState(event?.description || "")
   
-  // Separate date and time fields
-  const [startDateStr, setStartDateStr] = useState(
-    event?.startDate ? formatDateToDDMMYYYY(new Date(event.startDate)) : ""
+  // Date fields (as Date objects for Calendar component)
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    event?.startDate ? new Date(event.startDate) : undefined
   )
-  const [startTimeStr, setStartTimeStr] = useState(
-    event?.startDate ? formatTimeToHHMM(new Date(event.startDate)) : ""
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    event?.endDate ? new Date(event.endDate) : undefined
   )
-  const [endDateStr, setEndDateStr] = useState(
-    event?.endDate ? formatDateToDDMMYYYY(new Date(event.endDate)) : ""
+  
+  // Time fields (as HH:mm strings)
+  const [startTime, setStartTime] = useState(
+    event?.startDate ? formatTimeToHHMM(new Date(event.startDate)) : "09:00"
   )
-  const [endTimeStr, setEndTimeStr] = useState(
-    event?.endDate ? formatTimeToHHMM(new Date(event.endDate)) : ""
+  const [endTime, setEndTime] = useState(
+    event?.endDate ? formatTimeToHHMM(new Date(event.endDate)) : "10:00"
   )
   
   const [location, setLocation] = useState(event?.location || "")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async () => {
-    if (!title.trim() || !startDateStr || !startTimeStr) return
+    if (!title.trim() || !startDate || !startTime) return
 
     setIsSubmitting(true)
     try {
-      // Convert dd-mm-yyyy HH:mm format to ISO datetime
-      const startDateISO = parseToISO(startDateStr, startTimeStr)
-      const endDateISO = endDateStr && endTimeStr ? parseToISO(endDateStr, endTimeStr) : undefined
+      // Convert Date + time to ISO datetime
+      const startDateISO = combineDateTime(startDate, startTime)
+      const endDateISO = endDate && endTime ? combineDateTime(endDate, endTime) : undefined
 
       await onSubmit({
         title,
@@ -98,10 +101,10 @@ export default function CreateEventDialog({
       if (mode === "create") {
         setTitle("")
         setDescription("")
-        setStartDateStr("")
-        setStartTimeStr("")
-        setEndDateStr("")
-        setEndTimeStr("")
+        setStartDate(undefined)
+        setEndDate(undefined)
+        setStartTime("09:00")
+        setEndTime("10:00")
         setLocation("")
       }
       onOpenChange(false)
@@ -114,7 +117,7 @@ export default function CreateEventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
-      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent onPointerDownOutside={(e) => e.preventDefault()} className="max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? "Criar Evento" : "Editar Evento"}
@@ -146,50 +149,79 @@ export default function CreateEventDialog({
               className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
+          
+          {/* Start Date and Time */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startDate">Data de Início *</Label>
-              <Input
-                id="startDate"
-                placeholder="dd-mm-yyyy"
-                value={startDateStr}
-                onChange={(e) => setStartDateStr(e.target.value)}
-                pattern="\d{2}-\d{2}-\d{4}"
-              />
+              <Label>Data de Início *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "dd/MM/yyyy", { locale: pt }) : "Selecionar data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                    locale={pt}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label htmlFor="startTime">Hora *</Label>
               <Input
                 id="startTime"
-                placeholder="HH:mm"
-                value={startTimeStr}
-                onChange={(e) => setStartTimeStr(e.target.value)}
-                pattern="\d{2}:\d{2}"
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
               />
             </div>
           </div>
+          
+          {/* End Date and Time */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="endDate">Data de Fim</Label>
-              <Input
-                id="endDate"
-                placeholder="dd-mm-yyyy"
-                value={endDateStr}
-                onChange={(e) => setEndDateStr(e.target.value)}
-                pattern="\d{2}-\d{2}-\d{4}"
-              />
+              <Label>Data de Fim</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "dd/MM/yyyy", { locale: pt }) : "Selecionar data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    initialFocus
+                    locale={pt}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label htmlFor="endTime">Hora</Label>
               <Input
                 id="endTime"
-                placeholder="HH:mm"
-                value={endTimeStr}
-                onChange={(e) => setEndTimeStr(e.target.value)}
-                pattern="\d{2}:\d{2}"
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
               />
             </div>
           </div>
+          
           <div className="space-y-2">
             <Label htmlFor="location">Localização</Label>
             <Input
@@ -210,7 +242,7 @@ export default function CreateEventDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || !title.trim() || !startDateStr || !startTimeStr}
+            disabled={isSubmitting || !title.trim() || !startDate || !startTime}
           >
             {isSubmitting
               ? mode === "create"
