@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Sidebar from "@/components/Sidebar";
+import Sidebar, { ActivePage } from "@/components/Sidebar";
 import SearchBar from "@/components/SearchBar";
 import Calendar from "@/components/Calendar";
 import TaskSidebar from "@/components/TaskSidebar";
 import EventModal from "@/components/EventModal";
+import TasksPage from "@/components/TasksPage";
+import EventsPage from "@/components/EventsPage";
+import DisciplinesPage from "@/components/DisciplinesPage";
 import { CalendarEvent } from "@/types/calendar";
 import { Task } from "@/types/task";
 import { DayEvent } from "@/types/event";
@@ -29,6 +32,7 @@ export default function Home() {
   const [selectedEvent, setSelectedEvent] = useState<DayEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [activePage, setActivePage] = useState<ActivePage>("calendario");
 
   const toggleTask = (id: number) => {
     setTasks(tasks.map(task =>
@@ -39,7 +43,6 @@ export default function Home() {
   const handleMonthChange = (month: number, year: number) => {
     setCurrentMonth(month);
     setCurrentYear(year);
-    // Reset selected date to 1 when changing month
     setSelectedDate(1);
   };
 
@@ -53,7 +56,7 @@ export default function Home() {
     setSelectedEvent(null);
   };
 
-  // Eventos do calendário para outubro de 2024
+  // Eventos do calendário
   const calendarEvents: CalendarEvent[] = [
     { id: 1, date: 1, day: "Terça-feira" },
     { id: 2, date: 3, day: "Quinta-feira" },
@@ -93,43 +96,89 @@ export default function Home() {
     },
   ];
 
+  // Eventos para a página de eventos (com tipos)
+  const allEvents = [
+    { id: 1, name: "Prova de Cálculo", date: "26 Dez", time: "09:00", type: "teste" as const, discipline: "Cálculo Avançado", description: "Prova sobre derivadas e integrais" },
+    { id: 2, name: "Entrega de Trabalho", date: "26 Dez", time: "14:00", type: "trabalho" as const, discipline: "Química Orgânica" },
+    { id: 3, name: "Apresentação do Projeto", date: "28 Dez", time: "10:00", type: "projeto" as const, discipline: "Programação" },
+    { id: 4, name: "Exercícios de laboratório", date: "20 Dez", time: "23:59", type: "tarefa" as const, discipline: "Física" },
+    { id: 5, name: "Teste de Inglês", date: "22 Dez", time: "11:00", type: "teste" as const, discipline: "Inglês" },
+  ];
+
+  // Workspaces
+  const workspaces = [
+    { id: 1, name: "1º Semestre" },
+    { id: 2, name: "2º Semestre" },
+    { id: 3, name: "Extracurricular" },
+  ];
+
+  // Disciplinas
+  const disciplines = [
+    { id: 1, name: "Cálculo Avançado", teacher: "Prof. João Silva", color: "#1E40AF", workspaceId: 1 },
+    { id: 2, name: "Química Orgânica", teacher: "Prof. Maria Santos", color: "#059669", workspaceId: 1 },
+    { id: 3, name: "Programação", teacher: "Prof. Carlos Mendes", color: "#7C3AED", workspaceId: 1 },
+    { id: 4, name: "Física", teacher: "Prof. Ana Costa", color: "#DC2626", workspaceId: 2 },
+    { id: 5, name: "Inglês", teacher: "Prof. Pedro Lima", color: "#EA580C", workspaceId: 2 },
+    { id: 6, name: "Música", teacher: "Prof. Rita Fonseca", color: "#0891B2", workspaceId: 3 },
+  ];
+
   // Filtrar eventos do dia selecionado
   const dayEvents = useMemo(() =>
     allDayEvents.filter(event => event.date === selectedDate),
     [selectedDate]
   );
 
+  // Renderizar conteúdo baseado na página ativa
+  const renderContent = () => {
+    switch (activePage) {
+      case "calendario":
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+            <div className="flex flex-col gap-8">
+              <SearchBar />
+              <Calendar
+                events={calendarEvents}
+                selectedDate={selectedDate}
+                onDateSelect={setSelectedDate}
+                currentMonth={currentMonth}
+                currentYear={currentYear}
+                onMonthChange={handleMonthChange}
+              />
+            </div>
+            <aside className="lg:block">
+              <TaskSidebar
+                tasks={tasks}
+                onToggleTask={toggleTask}
+                dayEvents={dayEvents}
+                selectedDate={selectedDate}
+                onEventClick={handleEventClick}
+              />
+            </aside>
+          </div>
+        );
+      case "tarefas":
+        return <TasksPage tasks={tasks} onToggleTask={toggleTask} />;
+      case "eventos":
+        return <EventsPage events={allEvents} />;
+      case "disciplinas":
+        return <DisciplinesPage disciplines={disciplines} workspaces={workspaces} />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
-      <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        activePage={activePage}
+        onPageChange={setActivePage}
+      />
       <div className={`layout-container flex h-full grow flex-col transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
         <main className="flex flex-1 justify-center py-5 px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-7xl">
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-              {/* Conteúdo principal */}
-              <div className="flex flex-col gap-8">
-                <SearchBar />
-                <Calendar
-                  events={calendarEvents}
-                  selectedDate={selectedDate}
-                  onDateSelect={setSelectedDate}
-                  currentMonth={currentMonth}
-                  currentYear={currentYear}
-                  onMonthChange={handleMonthChange}
-                />
-              </div>
-
-
-              <aside className="lg:block">
-                <TaskSidebar
-                  tasks={tasks}
-                  onToggleTask={toggleTask}
-                  dayEvents={dayEvents}
-                  selectedDate={selectedDate}
-                  onEventClick={handleEventClick}
-                />
-              </aside>
-            </div>
+            {renderContent()}
           </div>
         </main>
       </div>
@@ -148,4 +197,3 @@ export default function Home() {
     </div>
   );
 }
-

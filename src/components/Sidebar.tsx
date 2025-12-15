@@ -1,22 +1,20 @@
 "use client";
 
-import { useState } from "react";
+export type ActivePage = "calendario" | "tarefas" | "eventos" | "disciplinas";
 
 interface SidebarProps {
     isOpen: boolean;
     onToggle: () => void;
+    activePage: ActivePage;
+    onPageChange: (page: ActivePage) => void;
 }
 
-type ActivePage = "calendario" | "tarefas" | "eventos" | "notificacoes";
-
-export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
-    const [activePage, setActivePage] = useState<ActivePage>("calendario");
-
+export default function Sidebar({ isOpen, onToggle, activePage, onPageChange }: SidebarProps) {
     const navItems = [
         { id: "calendario" as ActivePage, icon: "calendar_month", label: "Calendário" },
         { id: "tarefas" as ActivePage, icon: "task", label: "Tarefas" },
         { id: "eventos" as ActivePage, icon: "event", label: "Eventos" },
-        { id: "notificacoes" as ActivePage, icon: "notifications", label: "Notificações" },
+        { id: "disciplinas" as ActivePage, icon: "school", label: "Disciplinas" },
     ];
 
     return (
@@ -47,7 +45,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                     {navItems.map((item) => (
                         <button
                             key={item.id}
-                            onClick={() => setActivePage(item.id)}
+                            onClick={() => onPageChange(item.id)}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors w-full text-left ${activePage === item.id
                                     ? 'text-[#1E40AF] bg-blue-50 hover:bg-blue-100'
                                     : 'text-slate-600 hover:bg-slate-100'
