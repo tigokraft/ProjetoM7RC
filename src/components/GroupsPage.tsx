@@ -135,8 +135,8 @@ export default function GroupsPage() {
 
     // Modal de Criar Workspace
     const CreateWorkspaceModal = () => (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateWorkspaceModal(false)}>
+            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
                 <h2 className="text-xl font-bold text-slate-800 mb-4">Criar Novo Workspace</h2>
 
                 <div className="space-y-4">
@@ -148,6 +148,7 @@ export default function GroupsPage() {
                             onChange={(e) => setNewWorkspaceName(e.target.value)}
                             placeholder="Ex: Escola Secundária"
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            autoFocus
                         />
                     </div>
                 </div>
@@ -176,8 +177,8 @@ export default function GroupsPage() {
 
     // Modal de Criar Grupo
     const CreateGroupModal = () => (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
+            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
                 <h2 className="text-xl font-bold text-slate-800 mb-4">Criar Novo Grupo</h2>
 
                 <div className="space-y-4">
@@ -189,6 +190,7 @@ export default function GroupsPage() {
                             onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
                             placeholder="Ex: Turma 12ºA"
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            autoFocus
                         />
                     </div>
 
