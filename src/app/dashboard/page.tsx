@@ -9,8 +9,9 @@ import TaskSidebar from "@/components/TaskSidebar";
 import EventModal from "@/components/EventModal";
 import { tasksAPI, eventsAPI } from "@/lib/api";
 import type { Task, Event } from "@/types/api-types";
+import type { DayEvent as SidebarDayEvent } from "@/types/event";
 
-interface DayEvent {
+interface CalendarDayEvent {
   id: string;
   name: string;
   time: string;
@@ -29,7 +30,7 @@ export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(today.getDate());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [selectedEvent, setSelectedEvent] = useState<DayEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarDayEvent | null>(null);
   
   const [tasks, setTasks] = useState<Task[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -144,7 +145,7 @@ export default function DashboardPage() {
 
   // Get tasks and events for selected date
   const dayEvents = useMemo(() => {
-    const result: DayEvent[] = [];
+    const result: CalendarDayEvent[] = [];
 
     // Add tasks
     tasks.forEach((task) => {
@@ -212,8 +213,11 @@ export default function DashboardPage() {
     }
   };
 
-  const handleEventClick = (event: DayEvent) => {
-    setSelectedEvent(event);
+  const handleEventClick = (event: SidebarDayEvent) => {
+    const fullEvent = dayEvents.find(e => e.id === String(event.id));
+    if (fullEvent) {
+      setSelectedEvent(fullEvent);
+    }
   };
 
   if (loading && !currentWorkspace) {
@@ -249,7 +253,15 @@ export default function DashboardPage() {
             const event = dayEvents.filter((e) => e.type === "task")[id - 1];
             if (event) toggleTask(event.id);
           }}
-          dayEvents={dayEvents}
+          dayEvents={dayEvents.map(e => ({
+            id: Number(e.id.split('-')[e.id.split('-').length - 1]) || 0,
+            name: e.name,
+            time: e.time,
+            location: e.location,
+            description: e.description,
+            icon: e.icon,
+            date: e.date,
+          })) as SidebarDayEvent[]}
           selectedDate={selectedDate}
           onEventClick={handleEventClick}
         />
