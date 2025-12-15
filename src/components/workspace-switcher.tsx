@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronsUpDown, Plus, Check } from "lucide-react"
+import { ChevronsUpDown, Plus, Check, UserPlus } from "lucide-react"
 import {
   Popover,
   PopoverContent,
@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import InviteMembersDialog from "@/components/invite-members-dialog"
 
 interface Workspace {
   id: string
@@ -43,6 +44,7 @@ export default function WorkspaceSwitcher({
   const [workspaceName, setWorkspaceName] = useState("")
   const [workspaceType, setWorkspaceType] = useState<"CLASS" | "PERSONAL">("CLASS")
   const [isCreating, setIsCreating] = useState(false)
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
 
   const handleCreateWorkspace = async () => {
     if (!workspaceName.trim()) return
@@ -155,7 +157,20 @@ export default function WorkspaceSwitcher({
                 )}
               </Button>
             ))}
-            <div className="border-t pt-1">
+            <div className="border-t pt-1 space-y-1">
+              {currentWorkspace && (
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    setInviteDialogOpen(true)
+                    setOpen(false)
+                  }}
+                >
+                  <UserPlus className="mr-2 size-4" />
+                  <span className="text-sm">Convidar membros</span>
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 className="w-full justify-start"
@@ -223,6 +238,14 @@ export default function WorkspaceSwitcher({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {currentWorkspace && (
+        <InviteMembersDialog
+          open={inviteDialogOpen}
+          onOpenChange={setInviteDialogOpen}
+          workspaceId={currentWorkspace.id}
+        />
+      )}
     </>
   )
 }
