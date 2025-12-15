@@ -12,6 +12,12 @@ export default function DisciplinesRoute() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Clear disciplines when workspace changes
+  useEffect(() => {
+    setDisciplines([]);
+    setLoading(true);
+  }, [currentWorkspace?.id]);
+
   // Fetch disciplines
   const fetchDisciplines = useCallback(async () => {
     if (!currentWorkspace?.id) {
