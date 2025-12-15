@@ -28,6 +28,7 @@ export default function Home() {
 
   const [selectedEvent, setSelectedEvent] = useState<DayEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const toggleTask = (id: number) => {
     setTasks(tasks.map(task =>
@@ -100,8 +101,8 @@ export default function Home() {
 
   return (
     <div className="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
-      <Sidebar />
-      <div className="layout-container flex h-full grow flex-col ml-64">
+      <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <div className={`layout-container flex h-full grow flex-col transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
         <main className="flex flex-1 justify-center py-5 px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-7xl">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
