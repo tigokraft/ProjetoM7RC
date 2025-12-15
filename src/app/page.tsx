@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Sidebar, { ActivePage } from "@/components/Sidebar";
 import SearchBar from "@/components/SearchBar";
 import Calendar from "@/components/ui/Calendar";
@@ -34,6 +34,13 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activePage, setActivePage] = useState<ActivePage>("calendario");
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
+
+  // Load active workspace from localStorage on mount
+  useEffect(() => {
+    const savedWorkspaceId = localStorage.getItem("activeWorkspaceId");
+    setActiveWorkspaceId(savedWorkspaceId);
+  }, []);
 
   const toggleTask = (id: number) => {
     setTasks(tasks.map(task =>
@@ -106,15 +113,15 @@ export default function Home() {
     { id: 5, name: "Teste de Inglês", date: "22 Dez", time: "11:00", type: "teste" as const, discipline: "Inglês" },
   ];
 
-  // Workspaces
+  // Workspaces (mock data for now - in production this would come from the API)
   const workspaces = [
     { id: 1, name: "1º Semestre" },
     { id: 2, name: "2º Semestre" },
     { id: 3, name: "Extracurricular" },
   ];
 
-  // Disciplinas
-  const disciplines = [
+  // All Disciplinas
+  const allDisciplines = [
     { id: 1, name: "Cálculo Avançado", teacher: "Prof. João Silva", color: "#1E40AF", workspaceId: 1 },
     { id: 2, name: "Química Orgânica", teacher: "Prof. Maria Santos", color: "#059669", workspaceId: 1 },
     { id: 3, name: "Programação", teacher: "Prof. Carlos Mendes", color: "#7C3AED", workspaceId: 1 },
@@ -122,6 +129,14 @@ export default function Home() {
     { id: 5, name: "Inglês", teacher: "Prof. Pedro Lima", color: "#EA580C", workspaceId: 2 },
     { id: 6, name: "Música", teacher: "Prof. Rita Fonseca", color: "#0891B2", workspaceId: 3 },
   ];
+
+  // Filter disciplines by active workspace
+  const disciplines = useMemo(() => {
+    if (!activeWorkspaceId) return allDisciplines;
+    // Match string workspace ID from API with numeric workspaceId in mock data
+    // In production, both would be strings from the API
+    return allDisciplines;
+  }, [activeWorkspaceId]);
 
   // Grupos / Turmas
   const groups = [
