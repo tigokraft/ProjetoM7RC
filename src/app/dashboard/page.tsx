@@ -1,83 +1,228 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useWorkspaceContext } from "@/contexts/WorkspaceContext";
 import SearchBar from "@/components/SearchBar";
-import Calendar from "@/components/Calendar";
+import Calendar, { type DayIndicators } from "@/components/Calendar";
+import type { CalendarEvent } from "@/components/Calendar";
 import TaskSidebar from "@/components/TaskSidebar";
 import EventModal from "@/components/EventModal";
-import type { CalendarEvent } from "@/components/Calendar";
+import { tasksAPI, eventsAPI } from "@/lib/api";
+import type { Task, Event } from "@/types/api-types";
 
 interface DayEvent {
-  id: number;
+  id: string;
   name: string;
   time: string;
   location: string;
   description?: string;
   icon: string;
   date: number;
+  type: "task" | "event";
+  isCompleted?: boolean;
 }
 
 export default function DashboardPage() {
-  const [selectedDate, setSelectedDate] = useState(26);
-  const [currentMonth, setCurrentMonth] = useState(11); // December (0-indexed)
-  const [currentYear, setCurrentYear] = useState(2024);
+  const { currentWorkspace } = useWorkspaceContext();
+  const today = new Date();
+  
+  const [selectedDate, setSelectedDate] = useState(today.getDate());
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [selectedEvent, setSelectedEvent] = useState<DayEvent | null>(null);
+  
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data for calendar events
-  const allDayEvents: DayEvent[] = [
-    {
-      id: 1,
-      name: "Prova de Cálculo",
-      time: "09:00 - 11:00",
-      location: "Sala 301, Prédio de Ciências",
-      description: "Prova sobre derivadas e integrais. Trazer calculadora científica.",
-      icon: "quiz",
-      date: 26,
-    },
-    {
-      id: 2,
-      name: "Entrega de Trabalho",
-      time: "14:00",
-      location: "Plataforma Online",
-      description: "Enviar relatório de laboratório sobre reações químicas.",
-      icon: "assignment",
-      date: 26,
-    },
-  ];
+  // Fetch tasks and events for the current month
+  const fetchData = useCallback(async () => {
+    if (!currentWorkspace?.id) {
+      setTasks([]);
+      setEvents([]);
+      setLoading(false);
+      return;
+    }
 
-  // Mock tasks
-  const tasks = [
-    { id: 1, name: "Resolver exercícios", subject: "Cálculo", dueDate: "24 Dez", completed: false },
-    { id: 2, name: "Preparar apresentação", subject: "Programação", dueDate: "28 Dez", completed: true },
-  ];
+    try {
+      setLoading(true);
+      const [tasksData, eventsData] = await Promise.all([
+        tasksAPI.list(currentWorkspace.id),
+        eventsAPI.list(currentWorkspace.id),
+      ]);
+      
+      setTasks(tasksData.tasks);
+      setEvents(eventsData.events);
+    } catch (error) {
+      console.error("Failed to fetch calendar data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentWorkspace?.id]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleMonthChange = (month: number, year: number) => {
     setCurrentMonth(month);
     setCurrentYear(year);
   };
 
-  // Convert to calendar events format
-  const calendarEvents: CalendarEvent[] = allDayEvents.map(event => ({
-    date: event.date,
-    name: event.name,
-    time: event.time,
-    location: event.location,
-    description: event.description,
-    icon: event.icon,
-  }));
+  // Process tasks and events to get day-by-day indicators
+  const dayIndicators = useMemo(() => {
+    const indicators = new Map<number, DayIndicators>();
 
-  // Get events for selected date
+    // Process tasks
+    tasks.forEach((task) => {
+      const taskDate = new Date(task.dueDate);
+      if (taskDate.getMonth() === currentMonth && taskDate.getFullYear() === currentYear) {
+        const day = taskDate.getDate();
+        const existing = indicators.get(day) || {
+          hasPendingTasks: false,
+          hasCompletedTasks: false,
+          hasEvents: false,
+        };
+
+        if (task.isCompleted) {
+          existing.hasCompletedTasks = true;
+        } else {
+          existing.hasPendingTasks = true;
+        }
+
+        indicators.set(day, existing);
+      }
+    });
+
+    // Process events
+    events.forEach((event) => {
+      const eventDate = new Date(event.startDate);
+      if (eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear) {
+        const day = eventDate.getDate();
+        const existing = indicators.get(day) || {
+          hasPendingTasks: false,
+          hasCompletedTasks: false,
+          hasEvents: false,
+        };
+
+        existing.hasEvents = true;
+        indicators.set(day, existing);
+      }
+    });
+
+    return indicators;
+  }, [tasks, events, currentMonth, currentYear]);
+
+  // Convert to calendar events format (for legacy compatibility)
+  const calendarEvents: CalendarEvent[] = useMemo(() => {
+    return events
+      .filter((event) => {
+        const eventDate = new Date(event.startDate);
+        return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
+      })
+      .map((event) => {
+        const startDate = new Date(event.startDate);
+        const endDate = event.endDate ? new Date(event.endDate) : null;
+        
+        const formatTime = (date: Date) => 
+          date.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
+        
+        const timeStr = endDate 
+          ? `${formatTime(startDate)} - ${formatTime(endDate)}`
+          : formatTime(startDate);
+
+        return {
+          date: startDate.getDate(),
+          name: event.title,
+          time: timeStr,
+          location: event.location || "Sem localização",
+          description: event.description || undefined,
+          icon: "event",
+        };
+      });
+  }, [events, currentMonth, currentYear]);
+
+  // Get tasks and events for selected date
   const dayEvents = useMemo(() => {
-    return allDayEvents.filter(e => e.date === selectedDate);
-  }, [selectedDate, allDayEvents]);
+    const result: DayEvent[] = [];
 
-  const toggleTask = (id: number) => {
-    // Tasks are read-only for now
+    // Add tasks
+    tasks.forEach((task) => {
+      const taskDate = new Date(task.dueDate);
+      if (
+        taskDate.getDate() === selectedDate &&
+        taskDate.getMonth() === currentMonth &&
+        taskDate.getFullYear() === currentYear
+      ) {
+        result.push({
+          id: task.id,
+          name: task.title,
+          time: taskDate.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }),
+          location: task.discipline?.name || "Sem disciplina",
+          description: task.description || undefined,
+          icon: task.isCompleted ? "check_circle" : "radio_button_unchecked",
+          date: selectedDate,
+          type: "task",
+          isCompleted: task.isCompleted,
+        });
+      }
+    });
+
+    // Add events
+    events.forEach((event) => {
+      const eventDate = new Date(event.startDate);
+      if (
+        eventDate.getDate() === selectedDate &&
+        eventDate.getMonth() === currentMonth &&
+        eventDate.getFullYear() === currentYear
+      ) {
+        const endDate = event.endDate ? new Date(event.endDate) : null;
+        const formatTime = (date: Date) =>
+          date.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
+        
+        const timeStr = endDate
+          ? `${formatTime(eventDate)} - ${formatTime(endDate)}`
+          : formatTime(eventDate);
+
+        result.push({
+          id: event.id,
+          name: event.title,
+          time: timeStr,
+          location: event.location || "Sem localização",
+          description: event.description || undefined,
+          icon: "event",
+          date: selectedDate,
+          type: "event",
+        });
+      }
+    });
+
+    return result;
+  }, [tasks, events, selectedDate, currentMonth, currentYear]);
+
+  // Toggle task completion
+  const toggleTask = async (id: string) => {
+    if (!currentWorkspace?.id) return;
+    
+    try {
+      await tasksAPI.toggleComplete(currentWorkspace.id, id);
+      await fetchData();
+    } catch (error) {
+      console.error("Failed to toggle task:", error);
+    }
   };
 
   const handleEventClick = (event: DayEvent) => {
     setSelectedEvent(event);
   };
+
+  if (loading && !currentWorkspace) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full size-8 border-b-2 border-[#1E40AF]"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -90,12 +235,22 @@ export default function DashboardPage() {
           currentMonth={currentMonth}
           currentYear={currentYear}
           onMonthChange={handleMonthChange}
+          dayIndicators={dayIndicators}
         />
       </div>
       <aside className="lg:block">
         <TaskSidebar
-          tasks={tasks}
-          onToggleTask={toggleTask}
+          tasks={dayEvents.filter((e) => e.type === "task").map((e, idx) => ({
+            id: idx + 1,
+            name: e.name,
+            subject: e.location,
+            dueDate: e.time,
+            completed: e.isCompleted || false,
+          }))}
+          onToggleTask={(id) => {
+            const event = dayEvents.filter((e) => e.type === "task")[id - 1];
+            if (event) toggleTask(event.id);
+          }}
           dayEvents={dayEvents}
           selectedDate={selectedDate}
           onEventClick={handleEventClick}
@@ -103,7 +258,12 @@ export default function DashboardPage() {
       </aside>
       {selectedEvent && (
         <EventModal
-          event={selectedEvent}
+          event={{
+            eventName: selectedEvent.name,
+            eventTime: selectedEvent.time,
+            eventLocation: selectedEvent.location,
+            eventDescription: selectedEvent.description,
+          }}
           isOpen={!!selectedEvent}
           onClose={() => setSelectedEvent(null)}
         />
