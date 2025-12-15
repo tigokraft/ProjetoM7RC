@@ -12,9 +12,13 @@ export function middleware(request: NextRequest) {
     "/register",
     "/forgot-password",
     "/reset-password",
+    "/account/login",
+    "/account/register",
+    "/account/forgot-password",
+    "/account/reset-password",
   ];
   const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith("/invite/")
+    (route) => pathname === route || pathname.startsWith("/invite/") || pathname.startsWith("/account/reset-password")
   );
   const isApiRoute = pathname.startsWith("/api/");
   const isStaticAsset =
